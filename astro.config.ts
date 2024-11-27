@@ -7,9 +7,12 @@ import codeHeadersPlugin from './src/plugins/codeHeadersPlugin'
 import readingTimePlugin from './src/plugins/readingTimePlugin'
 import config from './src/theme.config'
 
+import netlify from '@astrojs/netlify';
+
 export default defineConfig({
   site: config.site,
   integrations: [tailwind(), mdx(), sitemap()],
+
   markdown: {
     shikiConfig: {
       themes: config.shikiThemes,
@@ -17,5 +20,8 @@ export default defineConfig({
       transformers: [codeHeadersPlugin]
     },
     remarkPlugins: [readingTimePlugin]
-  }
+  },
+
+  output: 'server',
+  adapter: netlify()
 })
