@@ -1,35 +1,35 @@
 import { defineThemeConfig } from './types'
 
 export default defineThemeConfig({
-  site: 'https://nordlys.fjelloverflow.dev',
-  title: 'Nordlys',
-  description: 'A minimal Astro blog theme',
-  author: 'FjellOverflow',
+  site: 'https://patrickpiedad.me',
+  title: 'Pats Ecke',
+  description: 'My minimalistic corner of the internet',
+  author: 'Patrick Piedad',
   navbarItems: [
     { label: 'Blog', href: '/posts' },
     { label: 'Projects', href: '/projects' },
-    { label: 'Tags', href: '/tags' },
     { label: 'About', href: '/about' },
-    {
-      label: 'Other pages',
-      children: [
-        { label: 'Landing page', href: '/' },
-        { label: '404 page', href: '/404' },
-        { label: 'Author: FjellOverflow', href: '/authors/FjellOverflow' },
-        { label: 'Tag: documentation', href: '/tags/documentation' }
-      ]
-    }
+    { label: 'Tags', href: '/tags' },
+    // {
+    //   label: 'Other pages',
+    //   children: [
+    //     { label: 'Landing page', href: '/' },
+    //     { label: '404 page', href: '/404' },
+    //     { label: 'Author: FjellOverflow', href: '/authors/FjellOverflow' },
+    //     { label: 'Tag: documentation', href: '/tags/documentation' }
+    //   ]
+    // }
   ],
   footerItems: [
     {
       icon: 'tabler--brand-github',
-      href: 'https://github.com/FjellOverflow/nordlys',
-      label: 'Github'
+      href: 'https://github.com/patrickpiedad',
+      label: 'GitHub'
     },
     {
-      icon: 'tabler--rss',
-      href: '/feed.xml',
-      label: 'RSS feed'
+      icon: 'tabler--brand-linkedin',
+      href: 'https://www.linkedin.com/in/patrick-piedad/',
+      label: 'LinkedIn'
     }
   ],
 
@@ -37,9 +37,9 @@ export default defineThemeConfig({
   locale: 'en',
   mode: 'dark',
   modeToggle: true,
-  colorScheme: 'scheme-mono',
+  colorScheme: 'scheme-nord',
   openGraphImage: undefined,
-  postsPerPage: 4,
+  postsPerPage: 5,
   projectsPerPage: 3,
   scrollProgress: false,
   scrollToTop: true,

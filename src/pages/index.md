@@ -1,11 +1,17 @@
 ---
 layout: '@/layouts/LandingLayout.astro'
-title: Nordlys
-background: true
+title: Pats Ecke
+background: false
 logo: true
 ---
 
-A minimal Astro blog theme.\
-Ideal for a personal [blog](/posts) and showcasing a [projects](/projects) portfolio.\
-Fully customizable, dark mode & built-in color schemes.\
-Read more in the [about](/about) section.
+\
+Welcome to my ecke of the internet.\
+\
+This is where I share my thoughts and experiences on all things I find interesting.\
+\
+Feel free to look at my personal [blog](/posts) or learn [more about me](/about).\
+\
+I also have my own [passion projects](/projects).\
+\
+[Come on in!](/posts)
