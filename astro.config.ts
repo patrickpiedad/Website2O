@@ -7,7 +7,7 @@ import codeHeadersPlugin from './src/plugins/codeHeadersPlugin'
 import readingTimePlugin from './src/plugins/readingTimePlugin'
 import config from './src/theme.config'
 
-// import netlify from '@astrojs/netlify';
+import netlify from '@astrojs/netlify';
 
 export default defineConfig({
   site: config.site,
@@ -22,6 +22,6 @@ export default defineConfig({
     remarkPlugins: [readingTimePlugin]
   },
 
-  // output: 'server',
-  // adapter: netlify()
+  output: 'hybrid',
+  adapter: netlify()
 })
