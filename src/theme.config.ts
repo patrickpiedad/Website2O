@@ -38,7 +38,7 @@ export default defineThemeConfig({
   mode: 'dark',
   modeToggle: true,
   colorScheme: 'scheme-nord',
-  openGraphImage: 'src/assets/logo',
+  openGraphImage: undefined,
   postsPerPage: 5,
   projectsPerPage: 3,
   scrollProgress: false,
