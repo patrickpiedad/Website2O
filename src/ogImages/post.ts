@@ -16,7 +16,7 @@ export default (accent: string, bg: string) =>
               {
                 type: 'img',
                 props: {
-                  src: 'https://nordlys.fjelloverflow.dev/favicon.svg',
+                  src: 'https://i.postimg.cc/zfvRfTRd/logo.png',
                   height: 48,
                   width: 48
                 }
