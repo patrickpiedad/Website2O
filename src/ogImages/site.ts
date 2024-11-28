@@ -25,7 +25,7 @@ export default (accent: string, bg: string) => () => ({
                         {
                           type: 'img',
                           props: {
-                            src: 'https://i.postimg.cc/zfvRfTRd/logo.png',
+                            src: 'https://postimg.cc/1gxzCnB6',
                             height: 128,
                             width: 128
                           }
