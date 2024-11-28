@@ -1,12 +1,12 @@
 ---
 layout: '@/layouts/LandingLayout.astro'
 title: Pats Ecke
-background: false
+background: true
 logo: true
 ---
 
 \
-Welcome to my ecke of the internet.\
+Welcome to my corner of the internet.\
 \
 This is where I share my thoughts and experiences on all things I find interesting.\
 \
