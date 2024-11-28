@@ -15,8 +15,8 @@ export default defineThemeConfig({
     //   children: [
     //     { label: 'Landing page', href: '/' },
     //     { label: '404 page', href: '/404' },
-    //     { label: 'Author: FjellOverflow', href: '/authors/FjellOverflow' },
-    //     { label: 'Tag: documentation', href: '/tags/documentation' }
+    //     { label: 'Author: Patrick Piedad', href: '/authors/PatrickPiedad' },
+    //     { label: 'Tag: posts', href: '/tags/posts' }
     //   ]
     // }
   ],
