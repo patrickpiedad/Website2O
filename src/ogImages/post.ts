@@ -16,7 +16,7 @@ export default (accent: string, bg: string) =>
               {
                 type: 'img',
                 props: {
-                  src: 'https://postimg.cc/1gxzCnB6',
+                  src: 'https://patrickpiedad.me/favicon.svg',
                   height: 48,
                   width: 48
                 }
