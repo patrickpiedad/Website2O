@@ -5,13 +5,13 @@
   "description": "A minimal Astro blog theme",
   "author": "Patrick Piedad",
   "license": "GPL-3.0-only",
-  "homepage": "https://github.com/FjellOverflow/nordlys",
+  "homepage": "https://github.com/patrickpiedad/Website2O",
   "repository": {
     "type": "git",
-    "url": "https://github.com/FjellOverflow/nordlys.git"
+    "url": "https://github.com/patrickpiedad/Website2O.git"
   },
   "bugs": {
-    "url": "https://github.com/FjellOverflow/nordlys/issues"
+    "url": "https://github.com/patrickpiedad/Website2O/issues"
   },
   "keywords": [
     "astro",
