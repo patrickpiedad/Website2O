@@ -1,7 +1,7 @@
 import { defineThemeConfig } from './types'
 
 export default defineThemeConfig({
-  site: 'https://patrickpiedad.me',
+  site: 'https://patrickpiedad.me/',
   title: 'Pats Ecke',
   description: 'My minimalistic corner of the internet',
   author: 'Patrick Piedad',
@@ -40,7 +40,7 @@ export default defineThemeConfig({
   mode: 'dark',
   modeToggle: true,
   colorScheme: 'scheme-nord',
-  openGraphImage: 'https://patrickpiedad.me/favicon.svg',
+  openGraphImage: '@/assets/logo.svg',
   postsPerPage: 5,
   projectsPerPage: 3,
   scrollProgress: false,
