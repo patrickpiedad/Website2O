@@ -12,3 +12,5 @@ tags:
 This is my archived personal website using HTML5Up! and my own customizations for static site generation with 11ty.
 
 This website can be adapted to fit other personal portfolio ideas or company landing pages.
+
+The live website can be checked out at https://patrickpiedadarchived.netlify.app/
