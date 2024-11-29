@@ -11,16 +11,12 @@ So, I'm currently learning German... and if you know anything about learning Ger
 The language has several words that mean the same thing, and they are ALL used frequently in daily vernacular. As a result, you need to know most of them in order to progress towards fluency. For comparison, a Wikipedia article states that German has 330,000 header words (words in the dictionary) while Spanish only has 93,000 words.
 
 Now, you could either do this learning solely through tedious flashcards and spaced repetition, which does work great, OR you could add in what that random college friend preached about learning a foreign language when they got back from their semester abroad.
-<br><br>
 
-<center>
-<i>Immersion</i>
-</center>
-<br><br>
+*<div align="center">Immersion</div>*
 
 Let's move this metaphor towards software development.
 
-If your coding skills are the "German" in this situation, then the <i>tech world</i> is Germany.
+If your coding skills are the "German" in this situation, then the *tech world* is Germany.
 
 You could do a great job of advancing your coding skills through persistent studying and hard work, and eventually, you would achieve your goals. But why limit yourself to only those techniques that can wax and wane with your ability to withstand prolonged periods of endless tutorials. Instead, IMMERSE yourself in the environment.
 
@@ -44,16 +40,11 @@ Heck, on top of all that, it is really just nice to have a different avenue to l
 
 Now I'm a practical kind of guy, so I'll wrap up with my own ways (learned from all the wonderful people around me) to immerse yourself in the tech world.
 
-<ul>
-<li> Podcasts, such as CodeNewbie, Scrimba, FreeCodeCamp, The Changelog, Changelog News, Syntax, and .NET Rocks!</li>
-<br>
-<li> Attending tech conferences in your local area. I try to extend my radius as far as possible to maximize the exposure.</li>
-<br>
-<li> Joining a Discord or Slack community where you can have a constant presence with other like-minded people. I'm a part of the 100Devs community, and I couldn't recommend it more to anyone on the software development journey.</li>
-<br>
-<li> LinkedIn networking can also provide a great way to talking to people already in the industry. While this can be a little more daunting than the other options, it is absolutely critical in building your network and learning the finer details of companies you're interested in. </li>
-</ul>
 
-Cheers,
-<br>
+- Podcasts, such as CodeNewbie, Scrimba, FreeCodeCamp, The Changelog, Changelog News, Syntax, and .NET Rocks!
+- Attending tech conferences in your local area. I try to extend my radius as far as possible to maximize the exposure.
+- Joining a Discord or Slack community where you can have a constant presence with other like-minded people. I'm a part of the 100Devs community, and I couldn't recommend it more to anyone on the software development journey.
+- LinkedIn networking can also provide a great way to talking to people already in the industry. While this can be a little more daunting than the other options, it is absolutely critical in building your network and learning the finer details of companies you're interested in.
+
+Cheers,\
 Pat

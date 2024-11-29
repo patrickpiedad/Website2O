@@ -6,7 +6,7 @@ tags:
 - MSSA
 ---
 
-### <b> Introduction </b> 
+### Introduction 
 
 Welcome to the inaugural post in my blog series, "My MSSA Experience." Throughout this series, I will write about my experience as a Cloud Application Developer in the CAD15 MSSA admission. 
 
@@ -18,7 +18,7 @@ Okay, now that's over. Without further ado, let's jump right in.
 
 ---
 
-### <b> MSSA == Microsoft Software and Systems Academy. </b>
+###  MSSA == Microsoft Software and Systems Academy. 
 
 In a world of acronyms that mean several things, I wanted to define the MSSA acronym up front. Now, "what even is" MSSA? Straight from Microsoft's website:
 
@@ -30,7 +30,7 @@ Got it, let's cut to the chase.
 
 ---
 
-### <b> Program Overview </b>
+###  Program Overview 
 
 MSSA is a transitioning service member, veteran, and military-spouse oriented program that is aimed to guide the transition into the IT industry. This program targets people that have a passion for IT, but currently have little to no experience in it.
 
@@ -46,7 +46,7 @@ Let's dive in deeper.
 
 ---
 
-### <b> The Three Learning Paths </b>
+###  The Three Learning Paths 
 
 I used to be a big gamer in school, and while adult life has made gaming a little sparse for me, I still have inklings of the gaming mindset in everyday life.
 
@@ -54,44 +54,36 @@ Reading about "The Three Learning Paths" that MSSA offers for its core program s
 
 Anyways, here are the three learning paths for the core MSSA program:
 
-<ol>
-<li> <b> Cybersecurity Operations (CSO) </b> </li> 
+1. Cybersecurity Operations (CSO) 
 
 As the name suggests, CSO teaches cybersecurity fundamentals paired with the networking and server infrastructure knowledge needed to be successful in the field. CSO will allow you to defend IT infrastructures against cyberattacks in cloud environments and technologies. 
 
 This learning path is unique, as it is made specifically for people with two or more years of cybersecurity experience, including network and server operating systems. This learning path targets the following industry roles:
 
-<ul>
-<li> Security Operations Analyst </li>
-<li> Cybersecurity Solution Analyst </li>
-<li> Security Technical Specialist </li>
-<li> Security Engineer </li>
-</ul>
+- Security Operations Analyst
+- Cybersecurity Solution Analyst 
+- Security Technical Specialist 
+- Security Engineer
 
-<b><li> Server Cloud Administration (SCA) </li></b>
+2. Server Cloud Administration (SCA)
 
 SCA teaches fundamental networking and Windows Server administration concepts. SCA creates system administrators that can install, configure, manage, and support IT resources on premises in cloud and hybrid environments. This learning path targets the following industry roles:
 
-<ul>
-<li> IT Network Support Engineer </li>
-<li> Project / Program Manager </li>
-<li> IT Sales / Consultant </li>
-<li> Technical Account Manager </li>
-</ul>
+- IT Network Support Engineer
+- Project / Program Manager
+- IT Sales / Consultant
+- Technical Account Manager
 
-<b><li> Cloud Application Development (CAD) </li></b>
+3. Cloud Application Development (CAD) 
 
 CAD teaches you software development, with the primary context being the .NET ecosystem. You will learn the C# programming language, receive training on data structures and algorithms, and work directly with .NET MAUI, Azure, and cloud technologies. This learning path targets the following industry roles:
 
-<ul>
-<li> Software Engineer </li>
-<li> Service Engineer </li>
-<li> Customer Success Engineer </li>
-<li> Database Engineer </li>
-<li> Technical Project / Program Manager </li>
-</ul>
+- Software Engineer 
+- Service Engineer 
+- Customer Success Engineer 
+- Database Engineer 
+- Technical Project / Program Manager 
 
-</ol>
 
 From what I've heard from past participants and current cohorts, you will receive high quality training in all three learning paths. The challenge is figuring out what learning path fits you the best.
 
@@ -99,48 +91,30 @@ I recommend researching more about the target jobs for each path. This should gi
 
 ---
 
-### <b> The Other Half </b>
+###  The Other Half 
 
 
 Remember when I mentioned "professional development" training earlier? That is the "other half" that I'm referring to here.
 
-
-
 As we all know, the transition out of the military has many aspects to it, not least of which are the "softer skills" of resume writing, answering behavioral interview questions, tailoring your LinkedIn profiles, and networking (bleh).
-
-
 
 This all probably sounds familiar, as these are all topics that are most likely addressed in your TAP classes, at varying levels of quality.
 
-
-
 MSSA's Professional Development, also known as ProDev, is on a whole other level.
-
-
 
 Microsoft brings in the big guns here, with each cohort having an assigned Career Development Manager (CDM). Your CDM is like your "homeroom" teacher as well as the lead for your professional development training. In addition to taking care of all the administrative items required in the program, they provide the tailored touch for each person with reference interview training, resume edits, LinkedIn tailoring, and much more.
 
-
-
 I can't speak highly enough of CDM's, as they really are great people whose goal is to get YOU where you want to be, and they have the skills and network to back it.
-
-
 
 And that's not all!
 
-
-
 The program also gives you additional professional development AND technical mentors, straight from Microsoft! These people are subject matter experts in their respective jobs and volunteer to be mentors for MSSA. They are typically (but not required) veterans themselves and have a desire to give back. In other words, you are getting access to current industry experts that chose to be there for you. 
-
-
 
 See what I mean when I say MSSA ProDev is on another level?
 
-
 ---
 
-### <b> Hiring Partner Program </b>
-
+###  Hiring Partner Program 
 
 Don't worry we're getting close to the end. A few more thoughts that I think you'll be interested in.
 
@@ -152,19 +126,17 @@ That was sarcasm, if you didn't catch it.
 
 Now, I don't want to take away from how competitive and skilled you can become through MSSA. If the last 3-weeks of my CAD cohort experience is any indication, we'll be learning how to automate interstellar travel by next month.
 
-But Microsoft goes above and beyond in getting you employed in IT, bringing in companies that want to hire MSSA graduates specifically. These companies know the program, have hired graduates before, and have a <b>veteran-ready environment</b> to onboard you to your new career.
+But Microsoft goes above and beyond in getting you employed in IT, bringing in companies that want to hire MSSA graduates specifically. These companies know the program, have hired graduates before, and have a veteran-ready environment to onboard you to your new career.
 
 This is not something you get everywhere, especially with this level of quality.
 
 ---
 
-### <b> DoD SkillBridge Opportunity </b>
-
+###  DoD SkillBridge Opportunity 
 
 This section is short, but extremely important for any service member looking at SkillBridge opportunities, also known as Career Skills Program for my Army folk.
 
-<b>If you have the chance to do MSSA as a DoD SkillBridge opportunity, meaning doing this program in your last six months of service while still getting paid by the military, 1000% do it.</b>
-
+If you have the chance to do MSSA as a DoD SkillBridge opportunity, meaning doing this program in your last six months of service while still getting paid by the military, 1000% do it.
 
 The amount of dedicated transition work into the tech industry that this program will give you is unmatched.
 
@@ -172,7 +144,7 @@ My advice? Talk to your command EARLY and OFTEN. This will always be the best wa
 
 ---
 
-### <b> Bottom Line Down Low (BLDL) </b>
+###  Bottom Line Down Low (BLDL) 
 
 This is my to-be-copyrighted saying to rival the Army's Bottom Line Up Front, also known as BLUF. While it definitely has its applications, I do think that there is something artful in building up to your point in a final conclusion.
 

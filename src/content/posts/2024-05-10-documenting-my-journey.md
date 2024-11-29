@@ -6,16 +6,9 @@ tags:
 - codingjourney
 ---
 
-Because they told me to.
-
-Just kidding (kind of).
-
 I recently decided to write about my software development journey for a few different reasons, but here's the main one:
 
-<center>
-<b>Writing about my learning path gives me a place to reflect on all the things that I've learned so far.</b>
-</center>
-<br>
+**<div align="center">"Writing about my learning path gives me a place to reflect on all the things that I've learned so far.</div>**
 
 Really simple, right? I agree. However, I think there is a lot of value in this "simple idea."
 
@@ -25,7 +18,7 @@ As I continue to progress, I want to be able to look back and see my progress. I
 
 Writing about my learning path also forces me to internalize the concepts that I'm learning about. It's one thing to go through problem sets like manipulating arrays and using "Math.reduce" to find required values. It's another thing to describe your learning process through writing and "teach" it to your audience.
 
-<i>Additionally, I think it provides value to those that are looking to pursue the same path. </i>
+*Additionally, I think it provides value to those that are looking to pursue the same path.*
 
 I'm currently a military intelligence officer working to transition into the tech industry in Germany. While the military experience gave me soft skills that will prove helpful later on, it did not teach me any of the technical skills that I need to be successful in software development.
 
@@ -35,12 +28,12 @@ Documenting the path that I'm taking will hopefully show others that it is absol
 
 Outside of those reasons, there are a multitude of others to include:
 
-<ol>
-<li> It requires me to build a platform to share my knowledge. which is a great way to learn in itself.</li>
-<li> It builds my personal brand for potential employers, colleagues, and strangers on the internet to see.</li>
-<li> It gives my mom a reason to be proud of me.</li>
-<li> It gives me an outlet to organize the never-ending stream of thoughts in my head</li>
-</ol>
+
+1. It requires me to build a platform to share my knowledge. which is a great way to learn in itself.
+2. It builds my personal brand for potential employers, colleagues, and strangers on the internet to see.
+3. It gives my mom a reason to be proud of me.
+4. It gives me an outlet to organize the never-ending stream of thoughts in my head.
+
 
 So, if you're thinking about writing about your journey, let me be the first to encourage you to do it.
 
@@ -48,6 +41,5 @@ If you're wondering if software development is for you, then let's connect and w
 
 And if you're a five-foot short, Filipino lady with a cute but very talkative Yorkie Terrier, hi mom!
 
-Cheers,
-<br>
+Cheers,\
 Pat
