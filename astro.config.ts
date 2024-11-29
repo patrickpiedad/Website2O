@@ -10,7 +10,7 @@ import config from './src/theme.config'
 import netlify from '@astrojs/netlify';
 
 export default defineConfig({
-  site: 'https://patrickpiedad.me',
+  site: config.site,
   integrations: [tailwind(), mdx(), sitemap()],
 
   markdown: {
