@@ -40,7 +40,7 @@ export default defineThemeConfig({
   mode: 'dark',
   modeToggle: true,
   colorScheme: 'scheme-nord',
-  openGraphImage: '@/assets/logo.svg',
+  openGraphImage: 'https://patrickpiedad.me/favicon.svg',
   postsPerPage: 5,
   projectsPerPage: 3,
   scrollProgress: false,
