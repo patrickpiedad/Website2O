@@ -9,7 +9,13 @@ export default defineThemeConfig({
     { label: 'Blog', href: '/posts' },
     { label: 'Projects', href: '/projects' },
     { label: 'About', href: '/about' },
-    { label: 'Tags', href: '/tags' }
+    { label: 'Tags', href: '/tags' },
+    {
+      label: 'Other Pages',
+      children: [
+        { label: 'Landing Page', href: '/' },
+      ]
+    }
   ],
   footerItems: [
     {
