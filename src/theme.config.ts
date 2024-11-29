@@ -10,15 +10,6 @@ export default defineThemeConfig({
     { label: 'Projects', href: '/projects' },
     { label: 'About', href: '/about' },
     { label: 'Tags', href: '/tags' }
-    // {
-    //   label: 'Other pages',
-    //   children: [
-    //     { label: 'Landing page', href: '/' },
-    //     { label: '404 page', href: '/404' },
-    //     { label: 'Author: Patrick Piedad', href: '/authors/PatrickPiedad' },
-    //     { label: 'Tag: posts', href: '/tags/posts' }
-    //   ]
-    // }
   ],
   footerItems: [
     {
@@ -30,6 +21,11 @@ export default defineThemeConfig({
       icon: 'tabler--brand-linkedin',
       href: 'https://www.linkedin.com/in/patrick-piedad/',
       label: 'LinkedIn'
+    },
+    {
+      icon: 'tabler--rss',
+      href: '/feed.xml',
+      label: 'RSS feed'
     }
   ],
 
