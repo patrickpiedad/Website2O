@@ -25,5 +25,5 @@ export default defineConfig({
   output: 'hybrid',
   adapter: netlify({
     edgeMiddleware: true
-  }),
+  })
 })
