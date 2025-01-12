@@ -8,7 +8,7 @@ logo: true
 \
 Welcome to my corner of the internet.\
 \
-This is where I share my thoughts and experiences on all things I find interesting.\
+This is where I share my thoughts on all things I find interesting.\
 \
 Feel free to look at my personal [blog](/posts) or learn [more about me](/about).\
 \
