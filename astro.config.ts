@@ -22,7 +22,7 @@ export default defineConfig({
     remarkPlugins: [readingTimePlugin]
   },
 
-  output: 'hybrid',
+  output: 'static',
   adapter: netlify({
     edgeMiddleware: true
   })
