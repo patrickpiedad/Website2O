@@ -6,7 +6,7 @@ tags:
 - MSSA
 ---
 
-##  Introduction  
+##  Introduction
 
 Welcome to the second installment in my blog series, "My MSSA Experience." If you don't know what MSSA is, check out the first article in the series, <a href="https://patrickpiedad.netlify.app/blog/2024-07-27-what-is-mssa/">"What is MSSA?"</a>
 
