@@ -6,7 +6,7 @@ tags:
 - transition
 ---
 
-##  Military Transition Overseas  
+##  Introduction 
 
 I was stationed in Germany for roughly six years of my Army career. It comes as no surprise that I would meet my wife here and decide to settle down in Germany.
 
