@@ -12,8 +12,8 @@ Welcome to the third and final installment in my blog series, "My MSSA Experienc
 
 In this final article, we'll break down my experience in the Cloud Application Development pathway into the following sections:
 
-- The Technical Stuff
-- The ProDev Learning
+- The Technical Stuff 
+- ProDev Learning
 - Help Me Be Not Unemployed
 - My Honest Take
 
@@ -27,34 +27,79 @@ As you'll remember from previous articles, the Cloud Application Development pat
 
 My cohort had a mix of experience, from 100% beginners to people with CS degrees and years of programming under their belt.
 
-The technical curriculum looks like the following:
+My cohort's technical curriculum schedule looked like the following:
 
 ### Curriculum Schedule
 - Intro to Programming & GitHub (2 Weeks)
 - Programming in C# Part 1 (2 Weeks)
 - Data Structures & Algorithms (4 Weeks)
+-  Non-Technical Instruction - Professional Development Week -(1 Week)
 - Programming in C# Part 2 (2 Weeks)
 - .NET MAUI (2 Weeks)
 - Project Week & Technical Interviews (1 Week)
 - AZ-900 / AI-900 (1 Week)
 - AZ-204 (2 Weeks)
 
-This covers 16/17 weeks of the program, with Fridays and the one week in the middle being devoted to Professional Development.
+Our technical instruction covered 16/17 weeks of the program, with Fridays and one week in the middle being devoted to Professional Development.
 
-The program strives to take you from a beginner to "hireable" within these 16 weeks.
+Further breaking down the technical parts...
 
+### C# Learning
 
+- Basic computer data storage and processing
+- Thinking like a computer
+- Basic fundamentals such as data types, variables, constants, arrays, functions/methods, and loops
+- Structs, classes, value types, reference types
+- Exception handling
+- Object Oriented Programming concepts
+- C# libraries, LINQ
+- Console apps used as the basis to test applications
+- Windows Forms
+- Databases, SQL, and Entity Framework
 
+### Data Structures & Algorithms
+- Arrays (single, two, and multi dimensional)
+- Linked lists
+- Stacks
+- Queues
+- String operations
+- Recursion
+- Algorithm types and differences
+- Linear and Binary Search
+- Selection, Bubble, Insertion, Shell, Quick, and Merge Sort
+- Binary Trees and Traversal
+- Time vs Space Complexity, Big-O Notation
+
+### .NET MAUI
 
 ### Mini & Final Project
 
 ### Certifications
 
+### Technical Instructors
+
+We had a total of four instructors, all being official Microsoft Certified Trainers.
+
+My cohort found that our MSSA experience varied based on our instructor. 
+
+All the instructors met a minimum qualification, but like all teachers in the world, they each had their unique style to teaching.
+
+Some were very "textbook heavy," relying on the instruction material to lead the curriculum, while others developed their own curriculum on each approved topic, based on their own experiences in tech.
+
+I was personally a fan of the self-made curriculum, as it gave a feel of practicality and liveliness to the instruction.
+
+Whatever style your instructor has, ***you need to ask questions on anything you don't understand.*** 
+
+All of the instructors will happily take the time to help you. There were plenty bits of "project time" where 1:1 sessions were encouraged.
+
+I'm serious, ask your questions. If your question is answered, but you are still unclear, ask another question. Keep asking questions until you get the concept.
+
+It might seem annoying or even embarrassing for you, but the material will snowball fast if you have holes in your knowledge. This is your transition, maximize the opportunity.
 
 
 ---
 
-## The ProDev Learning
+## ProDev Learning
 
 ---
 
