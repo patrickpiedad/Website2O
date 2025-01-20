@@ -71,10 +71,24 @@ Further breaking down the technical parts...
 - Time vs Space Complexity, Big-O Notation
 
 ### .NET MAUI
+- Functionality and architecture of .NET MAUI 
+- XAML
+- MVVM architecture
+
+### AZ-204 Developing Solutions for Microsoft Azure
 
 ### Mini & Final Project
+- Description of mini project requirements, show basic CRUD functionality
+- Description of final project requirements, integrate database and expand features in Windows Forms, .NET MAUI, or Blazor
+- Opting to do mini-project and final project as same idea but expanded
 
 ### Certifications
+- AZ-900
+- AZ-104
+- AZ-204
+- AI-900
+- Security+
+- Highly recommend starting studying early in cohort, no later than week 4
 
 ### Technical Instructors
 
@@ -100,10 +114,25 @@ It might seem annoying or even embarrassing for you, but the material will snowb
 ---
 
 ## ProDev Learning
+- General schedule of Fridays and one week in middle of cohort (week 9)
+- Figuring out your personal and professional identities
+- Researching desired industries and prospective roles
+- Networking
+- How to market yourself, resume, cover letter, LinkedIn
+- Elevator pitches, interviewing
+- Handling the offer
+- Mock Interviews
+- Guest Speaker Talks
+- Professional & Technical Mentors
 
 ---
 
 ## Help Me Be Not Unemployed
+- Job searching (The Hunt)
+- Job boards
+- Hiring Fairs
+- Resumer reviews and continued mock interview practice
+- Community with cohort and CDM
 
 ---
 
