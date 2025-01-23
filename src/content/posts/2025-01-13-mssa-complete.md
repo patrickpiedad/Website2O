@@ -198,6 +198,16 @@ Our career development manager also brought previous MSSA graduates and recruite
 
 ### Professional & Technical Mentors
 
+Each cohort is seperated into a handful of groups when it comes to mentorship. Each group will have 3-4 professional mentors and 3-4 technical mentors. The mentorship meetings will rotate each week and cover a variety of topics to reinforce the program curriculum.
+
+This setup is a great advantage, as each of these mentors are subject matter experts in their fields, with many of them also being MSSA graduates. All mentors are current employees are Microsoft and meet certain criteria that qualifies them to advise an MSSA cohort.
+
+These hour long meetings every week gave a great venue to ask any questions we had and get context from mentors that were hiring managers and senior software engineers in the industry.
+
+In my specific case, one of my professional mentors put me in contact with people in his network that could answer my industry specific questions. Making those introductions expanded my knowledge base and made connections that can assist in job hunting in the future.
+
+Overall, these relationships are what you make of it. I recommend utilizing them as much as possible. 
+
 ---
 
 ## Help Me Be Not Unemployed
@@ -206,6 +216,26 @@ Our career development manager also brought previous MSSA graduates and recruite
 - Hiring Fairs
 - Resumer reviews and continued mock interview practice
 - Community with cohort and CDM
+- Member for life
+
+### Hiring Fairs & Internal Job Boards
+Outside of the curriculum provided in the program, MSSA also gives a lot of intangible support and an amount of exposure to internal hiring connections.
+
+Starting with hiring connections, MSSA has an internal job board in which roles with MSSA hiring partners are posted and available for all MSSA members. Ideally, these roles are tailored to MSSA-level applicants.
+
+My cohort unfortunately experienced posted roles in both the job board and hiring fairs that did not apply well to an MSSA applicant's experience level.
+
+Depending on your cohort, you may see or may not see the same results.
+
+### Job Search Support
+
+Moving to more positive notes, our cohort had incredible support from our career development manager. Throughout the cohort and beyond, we had constant support in resume reviews, mock interview practice, and finding referrals for the roles we applied to.
+
+This benefit of the program is ultimately hard to quantify, but paired with the camaraderie that we felt amongst our small group of veterans, we always had a community to fall back on throughout the job search.
+
+When I received my offers, I had immediate support to discuss the offer and talk through any negotiations that I should make. When I receive a 10+ rejections in the course of three days, I had a group of people going through the same rough patches.
+
+The MSSA program provided an incredible opportunity to grow a tight-knit cohort in a small period of time. I'm extremely grateful for the program, especially this particualr aspect of it.
 
 ---
 
