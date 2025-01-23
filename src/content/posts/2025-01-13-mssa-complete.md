@@ -33,7 +33,7 @@ My cohort's technical curriculum schedule looked like the following:
 - Intro to Programming & GitHub (2 Weeks)
 - Programming in C# Part 1 (2 Weeks)
 - Data Structures & Algorithms (4 Weeks)
--  Non-Technical Instruction - Professional Development Week -(1 Week)
+- Professional Development Week [Non-Technical Instruction] (1 Week)
 - Programming in C# Part 2 (2 Weeks)
 - .NET MAUI (2 Weeks)
 - Project Week & Technical Interviews (1 Week)
@@ -42,9 +42,9 @@ My cohort's technical curriculum schedule looked like the following:
 
 Our technical instruction covered 16/17 weeks of the program, with Fridays and one week in the middle being devoted to Professional Development.
 
-Further breaking down the technical parts...
+Below is a further breakdown of the curriculum, grouped by topic instead of chronological order.
 
-### C# Learning
+### C# Learning (Parts 1 & 2)
 
 - Basic computer data storage and processing
 - Thinking like a computer
@@ -52,13 +52,19 @@ Further breaking down the technical parts...
 - Structs, classes, value types, reference types
 - Exception handling
 - Object Oriented Programming concepts
-- C# libraries, LINQ
+- C# libraries and LINQ
 - Console apps used as the basis to test applications
 - Windows Forms
 - Databases, SQL, and Entity Framework
 
-### Data Structures & Algorithms
-- Arrays (single, two, and multi dimensional)
+This curriculum brought us from zero programming to being able to develop create-read-update-delete (CRUD) applications.
+
+I'll admit, this amount of instruction was overwhelming to digest and I didn't understand it fully, especially in the first few weeks. 
+
+That was okay. The deeper understanding came with time. Just keep at it.
+
+### Data Structures & Algorithms (DSA)
+- Arrays (single, two, and multi-dimensional)
 - Linked lists
 - Stacks
 - Queues
@@ -70,25 +76,69 @@ Further breaking down the technical parts...
 - Binary Trees and Traversal
 - Time vs Space Complexity, Big-O Notation
 
+Feedback from MSSA's hiring partners showed that DSA was the biggest weakness of applicants. This portion of the course was added in efforts for MSSA to tailor their participants to the demands of the market.
+
+This content was just as important as it was difficult to grasp. We progressed very quickly in these four weeks and the knowledge was the foundation to be able to tackle infamous LeetCode problem sets, critical for technical interviews.
+
+If you don't understand what's going on during this portion of the course, ask questions. More than the pure C# portions, DSA learning benefits greatly from walking through problems with a skilled developer.
+
 ### .NET MAUI
 - Functionality and architecture of .NET MAUI 
 - XAML
 - MVVM architecture
 
+This portion of the course was relatively short compared to the other curriculum, but was the first "framework" that we learned.
+
+Depending on where you live, the demand for this framework may be lower than other frameworks like React (JavaScript) or Spring (Java).
+
+If you end up liking .NET MAUI, you can use this knowledge to deploy your apps cross-platform. We had cohort members deploy their projects to mobile, which was really inspiring to see.
+
+I took this portion as an opportunity to see how "a" framework works, as I knew other frameworks would use similar concepts for developing applications.
+
 ### AZ-204 Developing Solutions for Microsoft Azure
+
+This part of the course gave the basis for the "cloud" portion of the cohort.
+
+We had a number of interactive labs that allowed for us to configure services in an Azure environment. This is where "coding" took more of a backseat and we focused on "architecting," how we could use cloud to deploy our applications.
+
+This included all primary services of Azure such as Blog Storage, Functions, and Cosmos DB. This also went into EntraID and how it could be used for security purposes in our cloud-based applications.
+
+We did not learn everything needed to pass AZ-204. This served more of a strong starting point. I'd estimate self study for another 2-3 months before being ready for the exam.
 
 ### Mini & Final Project
 - Description of mini project requirements, show basic CRUD functionality
 - Description of final project requirements, integrate database and expand features in Windows Forms, .NET MAUI, or Blazor
 - Opting to do mini-project and final project as same idea but expanded
 
+Our cohort had a mini-project and final-project as part of the curriculum.
+
+The mini-project was meant to be bring together everything learned in the first half of the course, prior to professional development week. The majority of our projects was a simple CRUD application using Windows Forms and the built in storage that Windows Forms deployed with.
+
+The final-project is meant to bring together all of our learning through that point, which was 3-4 weeks prior to graduation. These projects mostly featured .NET MAUI or Blazor based applications, both frameworks in the .NET ecosystem, and integrating an external database.
+
+I would recommend thinking about your project idea early. I benefited from making a small prototype of my application for my mini-project, and then expanding upon it for the final project. This let me keep a frame of reference and have a solid project with 100+ hours of work to showcase to employers.
+
 ### Certifications
+
+Below is a list of certifications that my cohort targeted during the program.
+
 - AZ-900
+- AI-900
 - AZ-104
 - AZ-204
-- AI-900
 - Security+
-- Highly recommend starting studying early in cohort, no later than week 4
+
+We received 1x voucher for a Microsoft certificate of our choice, which was quite nice to have.
+
+I ended up getting my AZ-900 certification, which served as a small cloud certificate to show a baseline of knowledge to employers. This was, by no means, a certificate that would land me a role, but it possibly gave an edge over another candidate with a similar profile.
+
+I would highly recommend deciding what certificate you want to go for in the first few weeks of your program, then begin studying. 
+
+We ran into the problem of having started our certificate preparation too late, and therefore not having them for initial job applications.
+
+To give a tangible goal, I believe that AZ-900, AI-900, and AZ-104 are reachable targets during the cohort, as long as you start early.
+
+Side Note: Security+ is on this list because its usually required for any government-focused roles. You won't receive any instruction or vouchers for this certificate through the program, but it is also reachable during the cohort timeline.
 
 ### Technical Instructors
 
@@ -110,10 +160,18 @@ I'm serious, ask your questions. If your question is answered, but you are still
 
 It might seem annoying or even embarrassing for you, but the material will snowball fast if you have holes in your knowledge. This is your transition, maximize the opportunity.
 
-
 ---
 
 ## ProDev Learning
+
+I described Professional Development, colloquially known as "ProDev" as "the other half" of the program. Don't take that as its the less important half either.
+
+We found the ProDev instruction to be as important, if not more important at times, than the technical curriculum.
+
+The military doesn't exactly prepare you for talking about yourself, interviewing, and answer behavioral questions. You'll most likely find that you are quite bad at it.
+
+That's where this portion of the program comes into play. Here's a list of topics that we covered in depth:
+
 - General schedule of Fridays and one week in middle of cohort (week 9)
 - Figuring out your personal and professional identities
 - Researching desired industries and prospective roles
@@ -121,9 +179,24 @@ It might seem annoying or even embarrassing for you, but the material will snowb
 - How to market yourself, resume, cover letter, LinkedIn
 - Elevator pitches, interviewing
 - Handling the offer
-- Mock Interviews
-- Guest Speaker Talks
-- Professional & Technical Mentors
+- Mock interview practice
+
+Our program had Fridays set aside for professional development, where we covered one of the topics above. My cohort in particular drilled behavioral questions from the beginning.
+
+By the time we went into the real mock interviews, everyone had improved multiple times over in their targeted story telling and presentation of themselves.
+
+### ProDev Week
+
+During this week, we took a break from all technical instruction and solely focused on professional development.
+
+Let me tell you, it was a much needed break after 8 weeks of drinking C# from the firehose.
+
+This week featured meeting with the other cohorts and working through more mock interviews as well as a host of guest speakers presenting their own takes on the job market, MSSA, and what we should do to get hired.
+
+Our career development manager also brought previous MSSA graduates and recruiters that she had connections with to speak to us. This was incredibly useful and motivating, especially seeing graduates that used to be in our positions, talking about their current tech roles and experience.
+
+
+### Professional & Technical Mentors
 
 ---
 
