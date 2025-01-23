@@ -8,7 +8,7 @@ tags:
 
 ##  Introduction
 
-Welcome to the third and final installment in my blog series, "My MSSA Experience." If you don't know what MSSA is, check out the first article in the series, <a href="https://patrickpiedad.netlify.app/blog/2024-07-27-what-is-mssa/">"What is MSSA?"</a>
+Welcome to the third and final installment in my blog series, "My MSSA Experience." If you don't know what MSSA is, check out the first article in the series, <a href="https://patrickpiedad.me/posts/2024-07-27-what-is-mssa/">"What is MSSA?"</a>
 
 In this final article, we'll break down my experience in the Cloud Application Development pathway into the following sections:
 
@@ -192,7 +192,7 @@ I am not saying that you need 3-5 years of developer experience prior to transit
 
 I am not saying that you need all the available Azure and AWS certifications to land a role in cloud.
 
-I am saying that there is a proverbial bar that you need to reach to be hirable.
+I am saying that there is a proverbial bar that you need to reach to be hireable.
 
 I am saying that all these things greatly improve your chances in a job market saturated with candidates with these qualifications and more.
 
