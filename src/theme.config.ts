@@ -29,6 +29,11 @@ export default defineThemeConfig({
       label: 'LinkedIn'
     },
     {
+      icon: 'tabler--brand-bluesky',
+      href: 'https://bsky.app/profile/patrickpiedad.bsky.social',
+      label: 'BlueSky'
+    },
+    {
       icon: 'tabler--rss',
       href: '/feed.xml',
       label: 'RSS feed'
