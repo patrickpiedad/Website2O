@@ -12,7 +12,7 @@ The base template is pulled from the starter Astro themes, specifically Nordlys 
 
 <h1 align="center"> Optimizations </h1>
 <ul>
-  <li>Add search functionality</li>
+  <li>Table of Contents scroll bar</li>
 </ul>
 
 <br></br>
