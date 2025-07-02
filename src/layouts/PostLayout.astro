@@ -42,21 +42,21 @@ const frontmatter: PageLayoutProps['frontmatter'] = {
   <TagsBar tags={resolveTags(post.data.tags)} />
 
   <div class="mt-4">
-    <span class="opacity-75"
+    <span class="opacity-95"
       >Published on <time datetime={post.data.publishedDate.toISOString()}
         >{toDateString(post.data.publishedDate)}</time
       > by</span
     >
     <a class="clickable" href={`/authors/${post.data.author}`}
       >{post.data.author}</a
-    > · <span class="whitespace-nowrap opacity-75">{readingTime} </span>
+    > · <span class="whitespace-nowrap opacity-95">{readingTime} </span>
   </div>
 
   {
     !!post.data.showToC && (
       <div
         slot="aside"
-        class="mt-24 hidden border-r border-accent pr-4 opacity-75 transition duration-500 ease-in-out hover:opacity-100 2xl:block"
+        class="mt-24 hidden border-r border-accent pr-4 opacity-95 transition duration-500 ease-in-out hover:opacity-100 2xl:block"
       >
         <ToC {headings} open />
       </div>
