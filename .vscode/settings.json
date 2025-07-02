@@ -1,10 +1,13 @@
 {
   "editor.formatOnSave": true,
+  "editor.defaultFormatter": "dbaeumer.vscode-eslint",
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit",
     "source.fixAll.stylelint": "explicit",
-    "source.organizeImports": "explicit"
+    "source.organizeImports": "explicit",
   },
+  "prettier.enable": false,
+  "prettier.requireConfig": true,
   "[json]": {
     "editor.defaultFormatter": "vscode.json-language-features"
   },
@@ -24,7 +27,7 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "[astro]": {
-    "editor.defaultFormatter": "astro-build.astro-vscode"
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
   },
   "eslint.validate": [
     "javascript",

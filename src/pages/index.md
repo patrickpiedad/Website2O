@@ -12,6 +12,6 @@ This is where I share my thoughts on all things I find interesting.\
 \
 Feel free to look at my personal [blog](/posts) or learn [more about me](/about).\
 \
-I also have my own [passion projects](/projects).\
+I also have a few [passion projects](/projects) that you can check out.\
 \
 [Come on in!](/posts)
