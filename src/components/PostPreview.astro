@@ -33,13 +33,13 @@ const { slug, data } = Astro.props.post
         <span>{data.title}</span>
       </a>
       <time
-        class="mt-4 text-sm opacity-75 sm:mt-0"
+        class="mt-4 text-sm opacity-95 sm:mt-0"
         datetime={data.publishedDate.toISOString()}
       >
         {toDateString(data.publishedDate)}
       </time>
     </div>
     <TagsBar tags={resolveTags(data.tags)} />
-    <div class="opacity-75">{data.description}</div>
+    <div class="opacity-95">{data.description}</div>
   </div>
 </div>
