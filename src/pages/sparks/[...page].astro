@@ -1,9 +1,11 @@
 ---
 import Pagination from '@/components/Pagination.astro'
+import SparksList from '@/components/SparksList.astro'
 import PageLayout, {
   type Props as PageLayoutProps
 } from '@/layouts/PageLayout.astro'
 import config from '@/theme.config'
+import { getSparks } from '@/util/sparks'
 import type { GetStaticPaths, InferGetStaticPropsType } from 'astro'
 
 export const getStaticPaths = (async ({ paginate }) => {

@@ -1,17 +1,17 @@
 ---
 import Pagination from '@/components/Pagination.astro'
-import ProjectsList from '@/components/ProjectsList.astro'
+import SparksList from '@/components/SparksList.astro'
 import PageLayout, {
   type Props as PageLayoutProps
 } from '@/layouts/PageLayout.astro'
 import config from '@/theme.config'
-import { getProjects } from '@/util/projects'
+import { getSparks } from '@/util/sparks'
 import type { GetStaticPaths, InferGetStaticPropsType } from 'astro'
 
 export const getStaticPaths = (async ({ paginate }) => {
-  const projects = await getProjects()
+  const sparks = await getSparks()
 
-  return paginate(projects, { pageSize: config.projectsPerPage })
+  return paginate(sparks, { pageSize: config.sparksPerPage })
 }) satisfies GetStaticPaths
 
 type Props = InferGetStaticPropsType<typeof getStaticPaths>
@@ -19,8 +19,8 @@ type Props = InferGetStaticPropsType<typeof getStaticPaths>
 const { page } = Astro.props
 
 const frontmatter: PageLayoutProps['frontmatter'] = {
-  title: 'Projects',
-  activeHeaderLink: 'Projects'
+  title: 'Sparks',
+  activeHeaderLink: 'Sparks'
 }
 ---
 
@@ -29,7 +29,7 @@ const frontmatter: PageLayoutProps['frontmatter'] = {
     {frontmatter.title}
     <span>{` (Page ${page.currentPage})`}</span>
   </h1>
-  <ProjectsList projects={page.data} />
+  <SparksList sparks={page.data} />
 
   <Pagination slot="bottom" page={page} />
 </PageLayout>
