@@ -31,4 +31,15 @@ const projects = defineCollection({
     })
 })
 
-export const collections = { posts, projects }
+const sparks = defineCollection({
+  type: 'content',
+  schema: ({ image }) =>
+    z.object({
+      title: z.string(),
+      publishedDate: z.date(),
+      tags: z.array(z.string()).default([]),
+      previewImage: image().or(z.string()).optional()
+    })
+})
+
+export const collections = { posts, projects, sparks }
