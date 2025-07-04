@@ -33,9 +33,8 @@ const projects = defineCollection({
 
 const sparks = defineCollection({
   type: 'content',
-  schema: ({ image }) =>
+  schema: () =>
     z.object({
-      title: z.string(),
       publishedDate: z.date()
     })
 })
