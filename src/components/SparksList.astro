@@ -2,6 +2,7 @@
 import Separator from '@/components/layout/Separator.astro'
 import { sortSparks } from '@/util/sparks'
 import type { CollectionEntry } from 'astro:content'
+import Spark from './Spark.astro'
 
 export interface Props {
   sparks: CollectionEntry<'sparks'>[]
@@ -17,7 +18,7 @@ sparks.sort(sortSparks)
     sparks.map((spark, index) => (
       <>
         <li>
-          <Project {spark} />
+          <Spark {spark} />
           {index !== sparks.length - 1 && <Separator class="mb-6 ml-2 mt-0" />}
         </li>
       </>

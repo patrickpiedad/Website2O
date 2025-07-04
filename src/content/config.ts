@@ -36,9 +36,7 @@ const sparks = defineCollection({
   schema: ({ image }) =>
     z.object({
       title: z.string(),
-      publishedDate: z.date(),
-      tags: z.array(z.string()).default([]),
-      previewImage: image().or(z.string()).optional()
+      publishedDate: z.date()
     })
 })
 
