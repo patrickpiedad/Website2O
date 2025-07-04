@@ -7,6 +7,7 @@ export default defineThemeConfig({
   author: 'Patrick Piedad',
   navbarItems: [
     { label: 'Blog', href: '/posts' },
+    { label: 'Sparks', href: '/sparks' },
     { label: 'Projects', href: '/projects' },
     { label: 'About', href: '/about' },
     { label: 'Tags', href: '/tags' }

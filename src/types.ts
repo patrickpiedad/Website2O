@@ -47,6 +47,7 @@ export interface ThemeConfig {
   colorScheme: ColorScheme
   openGraphImage: ImageMetadata | string | undefined
   postsPerPage: number
+  sparksPerPage: number
   projectsPerPage: number
   scrollProgress: boolean
   scrollToTop: boolean
@@ -61,6 +62,7 @@ const defaults = {
   colorScheme: ColorSchemes[0],
   openGraphImage: undefined,
   postsPerPage: 4,
+  sparksPerPage: 10,
   projectsPerPage: 3,
   scrollProgress: false,
   scrollToTop: true,
