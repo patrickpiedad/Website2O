@@ -9,9 +9,11 @@ import config from './src/theme.config'
 
 import netlify from '@astrojs/netlify'
 
+import react from '@astrojs/react'
+
 export default defineConfig({
   site: config.site,
-  integrations: [tailwind(), mdx(), sitemap()],
+  integrations: [tailwind(), mdx(), sitemap(), react()],
 
   markdown: {
     shikiConfig: {

@@ -9,8 +9,13 @@ export default defineThemeConfig({
     { label: 'Blog', href: '/posts' },
     { label: 'Sparks', href: '/sparks' },
     { label: 'Projects', href: '/projects' },
+    {
+      label: 'Apps',
+      children: [{ label: 'Timer', href: '/timer' }]
+    },
     { label: 'About', href: '/about' },
     { label: 'Tags', href: '/tags' }
+
     // {
     //   label: 'Other Pages',
     //   children: [

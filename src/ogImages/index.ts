@@ -2,6 +2,7 @@ import extractColorScheme from '@/ogImages/extractColorScheme'
 import post from '@/ogImages/post'
 import site from '@/ogImages/site'
 import config from '@/theme.config'
+import React from 'react'
 import satori, { type SatoriOptions } from 'satori'
 
 const fetchFont = async (weight: string) =>
@@ -11,7 +12,8 @@ const fetchFont = async (weight: string) =>
     )
   ).arrayBuffer()
 
-const satoriOptions: SatoriOptions = {
+// Create async function to initialize satori options
+const createSatoriOptions = async (): Promise<SatoriOptions> => ({
   width: 1200,
   height: 630,
   embedFont: true,
@@ -35,18 +37,21 @@ const satoriOptions: SatoriOptions = {
       style: 'normal'
     }
   ]
-}
+})
 
 const { mode, colorScheme } = config
-
 const { accent, bg } = extractColorScheme(colorScheme)[mode]
 
 const siteTemplate = site(accent, bg)
 const postTemplate = post(accent, bg)
 
 export default {
-  site: (...args: Parameters<typeof siteTemplate>) =>
-    satori(siteTemplate(...args), satoriOptions),
-  post: (...args: Parameters<typeof postTemplate>) =>
-    satori(postTemplate(...args), satoriOptions)
+  site: async (...args: Parameters<typeof siteTemplate>) => {
+    const satoriOptions = await createSatoriOptions()
+    return satori(siteTemplate(...args) as React.ReactElement, satoriOptions)
+  },
+  post: async (...args: Parameters<typeof postTemplate>) => {
+    const satoriOptions = await createSatoriOptions()
+    return satori(postTemplate(...args) as React.ReactElement, satoriOptions)
+  }
 }
