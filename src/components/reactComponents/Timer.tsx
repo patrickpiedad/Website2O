@@ -1,3 +1,4 @@
+import type { JSX } from 'astro/jsx-runtime'
 import { useEffect, useRef, useState } from 'react'
 
 type TimerMode = 'timer' | 'stopwatch' | 'pomodoro'
@@ -90,14 +91,15 @@ export default function Timer(): JSX.Element {
         oscillator.stop(audioContext.currentTime + 0.5)
       } catch (error) {
         console.log('Audio not supported')
+        console.log(`'Error is:' ${error}`)
       }
     }
 
     // Play initial beep
     playBeep()
 
-    // Continue playing beeps every 2 seconds for 30 seconds
-    alarmIntervalRef.current = setInterval(playBeep, 2000)
+    // Continue playing beeps every 1 seconds for 30 seconds
+    alarmIntervalRef.current = setInterval(playBeep, 1000)
 
     // Stop alarm after 30 seconds
     setTimeout(() => {
