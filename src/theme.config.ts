@@ -11,7 +11,6 @@ export default defineThemeConfig({
     { label: 'Projects', href: '/projects' },
     {
       label: 'Apps',
-      href: '/apps',
       children: [{ label: 'Timer', href: '/timer' }]
     },
     { label: 'About', href: '/about' },

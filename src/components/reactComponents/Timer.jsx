@@ -73,20 +73,27 @@ export default function Timer() {
     return () => clearInterval(intervalRef.current);
   }, []);
 
+  // Initialize time when component mounts
+  useEffect(() => {
+    if (mode === 'timer') {
+      setTime(inputMinutes * 60);
+    }
+  }, []);
+
   return (
-    <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-lg">
+    <div className="max-w-md mx-auto p-6 bg-gray-700 rounded-lg shadow-lg">
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">Timer App</h2>
+        <h2 className="text-2xl font-bold text-white mb-4">Timer App</h2>
         
         {/* Mode Switch */}
         <div className="flex justify-center mb-4">
-          <div className="bg-gray-200 rounded-lg p-1 flex">
+          <div className="bg-gray-600 rounded-lg p-1 flex">
             <button
               onClick={() => switchMode('timer')}
               className={`px-4 py-2 rounded-md transition-colors ${
                 mode === 'timer' 
                   ? 'bg-blue-500 text-white' 
-                  : 'text-gray-600 hover:text-gray-800'
+                  : 'text-gray-200 hover:text-white'
               }`}
             >
               Timer
@@ -96,7 +103,7 @@ export default function Timer() {
               className={`px-4 py-2 rounded-md transition-colors ${
                 mode === 'stopwatch' 
                   ? 'bg-blue-500 text-white' 
-                  : 'text-gray-600 hover:text-gray-800'
+                  : 'text-gray-200 hover:text-white'
               }`}
             >
               Stopwatch
@@ -107,7 +114,7 @@ export default function Timer() {
         {/* Timer Input (only show in timer mode) */}
         {mode === 'timer' && !isRunning && (
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-200 mb-2">
               Set Timer (minutes):
             </label>
             <input
@@ -116,21 +123,21 @@ export default function Timer() {
               max="60"
               value={inputMinutes}
               onChange={handleInputChange}
-              className="w-20 px-3 py-2 border border-gray-300 rounded-md text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-20 px-3 py-2 border border-gray-500 bg-gray-600 text-white rounded-md text-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
         )}
 
         {/* Time Display */}
         <div className={`text-6xl font-mono font-bold mb-6 ${
-          mode === 'timer' && time <= 10 && time > 0 ? 'text-red-500' : 'text-gray-800'
+          mode === 'timer' && time <= 10 && time > 0 ? 'text-red-400' : 'text-white'
         }`}>
           {formatTime(time)}
         </div>
 
         {/* Timer finished message */}
         {mode === 'timer' && time === 0 && (
-          <div className="text-red-500 font-bold mb-4">Time's up!</div>
+          <div className="text-red-400 font-bold mb-4">Time's up!</div>
         )}
 
         {/* Controls */}
