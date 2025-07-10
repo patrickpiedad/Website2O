@@ -2,7 +2,7 @@
 import PageLayout, {
   type Props as PageLayoutProps
 } from '@/layouts/PageLayout.astro'
-import TimerApp from '../components/reactComponents/Timer.jsx'
+import TimerApp from '../components/reactComponents/Timer.js'
 // import config from '@/theme.config'
 
 const frontmatter: PageLayoutProps['frontmatter'] = {
@@ -12,7 +12,7 @@ const frontmatter: PageLayoutProps['frontmatter'] = {
 ---
 
 <PageLayout {frontmatter}>
-  <h1>
+  <h1 class="text-center">
     {frontmatter.title}
   </h1>
   <TimerApp client:load />
