@@ -26,6 +26,17 @@ interface TTimerSettings {
   mode: TTimerMode
 }
 
+// Temporary input values (can be empty strings)
+interface TTimerInputs {
+  workTime: string
+  workTimeSeconds: string
+  restTime: string
+  restTimeSeconds: string
+  cycles: string
+  totalTime: string
+  totalTimeSeconds: string
+}
+
 export default function Timer() {
   const [time, setTime] = useState<number>(0) // Time in milliseconds
   const [isRunning, setIsRunning] = useState<boolean>(false)
@@ -68,6 +79,15 @@ export default function Timer() {
     totalTime: 20, // minutes
     totalTimeSeconds: 0, // seconds
     mode: 'cycles'
+  })
+  const [tTimerInputs, setTTimerInputs] = useState<TTimerInputs>({
+    workTime: '1',
+    workTimeSeconds: '0',
+    restTime: '0',
+    restTimeSeconds: '15',
+    cycles: '20',
+    totalTime: '20',
+    totalTimeSeconds: '0'
   })
   const [tTimerStartTime, setTTimerStartTime] = useState<number>(0)
   const [tTimerTotalElapsed, setTTimerTotalElapsed] = useState<number>(0)
@@ -436,22 +456,54 @@ export default function Timer() {
     }
   }
 
-  // Handle T-Timer settings changes
-  const handleTTimerSettingChange = (
-    setting: keyof TTimerSettings,
-    value: string | TTimerMode
+  // Handle T-Timer input changes (allow temporary empty values)
+  const handleTTimerInputChange = (
+    setting: keyof TTimerInputs,
+    value: string
   ): void => {
-    const newSettings = {
-      ...tTimerSettings,
-      [setting]:
-        typeof value === 'string' && setting !== 'mode'
-          ? Math.max(
-              setting === 'cycles' ? 1 : 0,
-              parseInt(value) || (setting === 'cycles' ? 1 : 0)
-            )
-          : value
+    setTTimerInputs(prev => ({
+      ...prev,
+      [setting]: value
+    }))
+  }
+
+  // Handle T-Timer input blur (validate and update settings)
+  const handleTTimerInputBlur = (
+    setting: keyof TTimerInputs
+  ): void => {
+    const value = tTimerInputs[setting]
+    let numericValue: number
+    
+    if (value === '' || isNaN(parseInt(value))) {
+      numericValue = setting === 'cycles' ? 1 : 0
+    } else {
+      numericValue = Math.max(setting === 'cycles' ? 1 : 0, parseInt(value))
     }
-    setTTimerSettings(newSettings)
+
+    // Update the input to show the validated value
+    setTTimerInputs(prev => ({
+      ...prev,
+      [setting]: numericValue.toString()
+    }))
+
+    // Update the actual settings
+    setTTimerSettings(prev => ({
+      ...prev,
+      [setting]: numericValue
+    }))
+
+    // Update current timer if not running
+    if (!isRunning && mode === 't-timer') {
+      setTime(getTTimerTime())
+    }
+  }
+
+  // Handle T-Timer mode changes
+  const handleTTimerModeChange = (mode: TTimerMode): void => {
+    setTTimerSettings(prev => ({
+      ...prev,
+      mode
+    }))
 
     // Update current timer if not running
     if (!isRunning && mode === 't-timer') {
@@ -615,9 +667,7 @@ export default function Timer() {
                   </label>
                   <div className="flex justify-center gap-2">
                     <button
-                      onClick={() =>
-                        handleTTimerSettingChange('mode', 'cycles')
-                      }
+                      onClick={() => handleTTimerModeChange('cycles')}
                       className={`rounded px-3 py-1 text-sm transition-colors ${
                         tTimerSettings.mode === 'cycles'
                           ? 'bg-blue-600 text-white'
@@ -627,9 +677,7 @@ export default function Timer() {
                       Cycles
                     </button>
                     <button
-                      onClick={() =>
-                        handleTTimerSettingChange('mode', 'total-time')
-                      }
+                      onClick={() => handleTTimerModeChange('total-time')}
                       className={`rounded px-3 py-1 text-sm transition-colors ${
                         tTimerSettings.mode === 'total-time'
                           ? 'bg-blue-600 text-white'
@@ -646,19 +694,18 @@ export default function Timer() {
                     <label className="mb-2 block text-gray-300">
                       Work Time
                     </label>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-center gap-2">
                       <div className="flex flex-col items-center">
                         <input
                           type="number"
                           min="0"
                           max="120"
-                          value={tTimerSettings.workTime}
+                          value={tTimerInputs.workTime}
                           onChange={(e) =>
-                            handleTTimerSettingChange(
-                              'workTime',
-                              e.target.value
-                            )
+                            handleTTimerInputChange('workTime', e.target.value)
                           }
+                          onBlur={() => handleTTimerInputBlur('workTime')}
+                          onFocus={(e) => e.target.select()}
                           className="w-16 rounded border border-gray-600 bg-gray-700 px-2 py-1 text-center text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                         <span className="mt-1 text-xs text-gray-400">min</span>
@@ -669,13 +716,12 @@ export default function Timer() {
                           type="number"
                           min="0"
                           max="59"
-                          value={tTimerSettings.workTimeSeconds}
+                          value={tTimerInputs.workTimeSeconds}
                           onChange={(e) =>
-                            handleTTimerSettingChange(
-                              'workTimeSeconds',
-                              e.target.value
-                            )
+                            handleTTimerInputChange('workTimeSeconds', e.target.value)
                           }
+                          onBlur={() => handleTTimerInputBlur('workTimeSeconds')}
+                          onFocus={(e) => e.target.select()}
                           className="w-16 rounded border border-gray-600 bg-gray-700 px-2 py-1 text-center text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                         <span className="mt-1 text-xs text-gray-400">sec</span>
@@ -694,19 +740,18 @@ export default function Timer() {
                     <label className="mb-2 block text-gray-300">
                       Rest Time
                     </label>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-center gap-2">
                       <div className="flex flex-col items-center">
                         <input
                           type="number"
                           min="0"
                           max="60"
-                          value={tTimerSettings.restTime}
+                          value={tTimerInputs.restTime}
                           onChange={(e) =>
-                            handleTTimerSettingChange(
-                              'restTime',
-                              e.target.value
-                            )
+                            handleTTimerInputChange('restTime', e.target.value)
                           }
+                          onBlur={() => handleTTimerInputBlur('restTime')}
+                          onFocus={(e) => e.target.select()}
                           className="w-16 rounded border border-gray-600 bg-gray-700 px-2 py-1 text-center text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                         <span className="mt-1 text-xs text-gray-400">min</span>
@@ -717,13 +762,12 @@ export default function Timer() {
                           type="number"
                           min="0"
                           max="59"
-                          value={tTimerSettings.restTimeSeconds}
+                          value={tTimerInputs.restTimeSeconds}
                           onChange={(e) =>
-                            handleTTimerSettingChange(
-                              'restTimeSeconds',
-                              e.target.value
-                            )
+                            handleTTimerInputChange('restTimeSeconds', e.target.value)
                           }
+                          onBlur={() => handleTTimerInputBlur('restTimeSeconds')}
+                          onFocus={(e) => e.target.select()}
                           className="w-16 rounded border border-gray-600 bg-gray-700 px-2 py-1 text-center text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                         <span className="mt-1 text-xs text-gray-400">sec</span>
@@ -740,18 +784,20 @@ export default function Timer() {
 
                   {tTimerSettings.mode === 'cycles' && (
                     <div>
-                      <label className="mb-1 block text-gray-300">
+                      <label className="mb-1 block text-center text-gray-300">
                         Number of Cycles
                       </label>
                       <input
                         type="number"
                         min="1"
                         max="20"
-                        value={tTimerSettings.cycles}
+                        value={tTimerInputs.cycles}
                         onChange={(e) =>
-                          handleTTimerSettingChange('cycles', e.target.value)
+                          handleTTimerInputChange('cycles', e.target.value)
                         }
-                        className="w-full rounded border border-gray-600 bg-gray-700 px-2 py-1 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        onBlur={() => handleTTimerInputBlur('cycles')}
+                        onFocus={(e) => e.target.select()}
+                        className="w-full rounded border border-gray-600 bg-gray-700 px-2 py-1 text-center text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
                   )}
@@ -761,19 +807,18 @@ export default function Timer() {
                       <label className="mb-2 block text-gray-300">
                         Total Time
                       </label>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center justify-center gap-2">
                         <div className="flex flex-col items-center">
                           <input
                             type="number"
                             min="0"
                             max="480"
-                            value={tTimerSettings.totalTime}
+                            value={tTimerInputs.totalTime}
                             onChange={(e) =>
-                              handleTTimerSettingChange(
-                                'totalTime',
-                                e.target.value
-                              )
+                              handleTTimerInputChange('totalTime', e.target.value)
                             }
+                            onBlur={() => handleTTimerInputBlur('totalTime')}
+                            onFocus={(e) => e.target.select()}
                             className="w-16 rounded border border-gray-600 bg-gray-700 px-2 py-1 text-center text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                           />
                           <span className="mt-1 text-xs text-gray-400">
@@ -786,13 +831,12 @@ export default function Timer() {
                             type="number"
                             min="0"
                             max="59"
-                            value={tTimerSettings.totalTimeSeconds}
+                            value={tTimerInputs.totalTimeSeconds}
                             onChange={(e) =>
-                              handleTTimerSettingChange(
-                                'totalTimeSeconds',
-                                e.target.value
-                              )
+                              handleTTimerInputChange('totalTimeSeconds', e.target.value)
                             }
+                            onBlur={() => handleTTimerInputBlur('totalTimeSeconds')}
+                            onFocus={(e) => e.target.select()}
                             className="w-16 rounded border border-gray-600 bg-gray-700 px-2 py-1 text-center text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                           />
                           <span className="mt-1 text-xs text-gray-400">
