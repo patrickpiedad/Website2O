@@ -151,7 +151,7 @@ interface TTimerInputs {
 export default function Timer() {
   const [time, setTime] = useState<number>(0) // Time in milliseconds
   const [isRunning, setIsRunning] = useState<boolean>(false)
-  const [mode, setMode] = useState<TimerMode>('timer')
+  const [mode, setMode] = useState<TimerMode>('t-timer')
   const [inputMinutes, setInputMinutes] = useState<number>(5)
   const [inputSeconds, setInputSeconds] = useState<number>(0)
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
@@ -524,7 +524,10 @@ export default function Timer() {
     if (value === '' || isNaN(parseInt(value))) {
       numericValue = setting === 'sessionsUntilLongBreak' ? 1 : 0
     } else {
-      numericValue = Math.max(setting === 'sessionsUntilLongBreak' ? 1 : 0, parseInt(value))
+      numericValue = Math.max(
+        setting === 'sessionsUntilLongBreak' ? 1 : 0,
+        parseInt(value)
+      )
     }
 
     // Update the input to show the validated value
@@ -1056,7 +1059,9 @@ export default function Timer() {
                                 e.target.value
                               )
                             }
-                            onBlur={() => handlePomodoroInputBlur('workTimeSeconds')}
+                            onBlur={() =>
+                              handlePomodoroInputBlur('workTimeSeconds')
+                            }
                             onFocus={(e) => e.target.select()}
                             className="w-16 rounded border border-gray-600 bg-gray-700 px-2 py-1 text-center text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                           />
@@ -1112,7 +1117,9 @@ export default function Timer() {
                                 e.target.value
                               )
                             }
-                            onBlur={() => handlePomodoroInputBlur('shortBreakSeconds')}
+                            onBlur={() =>
+                              handlePomodoroInputBlur('shortBreakSeconds')
+                            }
                             onFocus={(e) => e.target.select()}
                             className="w-16 rounded border border-gray-600 bg-gray-700 px-2 py-1 text-center text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                           />
@@ -1168,7 +1175,9 @@ export default function Timer() {
                                 e.target.value
                               )
                             }
-                            onBlur={() => handlePomodoroInputBlur('longBreakSeconds')}
+                            onBlur={() =>
+                              handlePomodoroInputBlur('longBreakSeconds')
+                            }
                             onFocus={(e) => e.target.select()}
                             className="w-16 rounded border border-gray-600 bg-gray-700 px-2 py-1 text-center text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                           />
@@ -1201,7 +1210,9 @@ export default function Timer() {
                             e.target.value
                           )
                         }
-                        onBlur={() => handlePomodoroInputBlur('sessionsUntilLongBreak')}
+                        onBlur={() =>
+                          handlePomodoroInputBlur('sessionsUntilLongBreak')
+                        }
                         onFocus={(e) => e.target.select()}
                         className="w-full rounded border border-gray-600 bg-gray-700 px-2 py-1 text-center text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
@@ -1382,7 +1393,7 @@ export default function Timer() {
           <div
             role="timer"
             aria-live="polite"
-aria-label={`Timer display: ${mode === 'stopwatch' ? formatTime(time) : formatCountdownTime(time)}`}
+            aria-label={`Timer display: ${mode === 'stopwatch' ? formatTime(time) : formatCountdownTime(time)}`}
             className={`mb-6 font-mono text-5xl font-bold ${
               (mode === 'timer' || mode === 'pomodoro' || mode === 't-timer') &&
               time <= 10000 &&
@@ -1401,7 +1412,9 @@ aria-label={`Timer display: ${mode === 'stopwatch' ? formatTime(time) : formatCo
                           : 'text-gray-100'
             }`}
           >
-            {mode === 'stopwatch' ? formatTime(time) : formatCountdownTime(time)}
+            {mode === 'stopwatch'
+              ? formatTime(time)
+              : formatCountdownTime(time)}
             <span className="sr-only">
               {isRunning ? 'Timer is running' : 'Timer is stopped'}
               {mode === 'pomodoro' && `, ${pomodoroPhase} phase`}
@@ -1504,4 +1517,3 @@ aria-label={`Timer display: ${mode === 'stopwatch' ? formatTime(time) : formatCo
     </div>
   )
 }
-
