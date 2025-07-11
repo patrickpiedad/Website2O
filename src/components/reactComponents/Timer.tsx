@@ -36,6 +36,11 @@ export default function Timer() {
   const [isAlarmPlaying, setIsAlarmPlaying] = useState<boolean>(false)
   const alarmIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
+  // Timestamp tracking for accurate timing
+  const startTimeRef = useRef<number>(0)
+  const initialTimeRef = useRef<number>(0)
+  const pausedTimeRef = useRef<number>(0)
+
   // Pomodoro state
   const [pomodoroSession, setPomodoroSession] = useState<number>(1)
   const [pomodoroPhase, setPomodoroPhase] = useState<PomodoroPhase>('work')
@@ -249,9 +254,14 @@ export default function Timer() {
     if (tTimerPhase === 'work') {
       // Work phase completed, start rest
       setTTimerPhase('rest')
-      setTime(
+      const newTime =
         (tTimerSettings.restTime * 60 + tTimerSettings.restTimeSeconds) * 1000
-      )
+      setTime(newTime)
+      // Reset timestamp tracking for new phase
+      setTimeout(() => {
+        startTimeRef.current = Date.now()
+        initialTimeRef.current = newTime
+      }, 0)
     } else {
       // Rest phase completed, check if we should stop before incrementing cycle
       if (
@@ -266,9 +276,14 @@ export default function Timer() {
       const nextCycle = tTimerCurrentCycle + 1
       setTTimerCurrentCycle(nextCycle)
       setTTimerPhase('work')
-      setTime(
+      const newTime =
         (tTimerSettings.workTime * 60 + tTimerSettings.workTimeSeconds) * 1000
-      )
+      setTime(newTime)
+      // Reset timestamp tracking for new phase
+      setTimeout(() => {
+        startTimeRef.current = Date.now()
+        initialTimeRef.current = newTime
+      }, 0)
     }
   }
 
@@ -309,13 +324,25 @@ export default function Timer() {
             1000
 
     setTime(newTime)
+    // Reset timestamp tracking for new phase
+    startTimeRef.current = Date.now()
+    initialTimeRef.current = newTime
   }
 
   // Start/stop timer
   const toggleTimer = (): void => {
-    if (!isRunning && mode === 't-timer') {
-      setTTimerStartTime(Date.now())
-      setTTimerTotalElapsed(0)
+    if (!isRunning) {
+      // Starting timer
+      if (mode === 't-timer') {
+        setTTimerStartTime(Date.now())
+        setTTimerTotalElapsed(0)
+      }
+      startTimeRef.current = Date.now()
+      initialTimeRef.current = time
+      pausedTimeRef.current = 0
+    } else {
+      // Pausing timer
+      pausedTimeRef.current = time
     }
     setIsRunning(!isRunning)
   }
@@ -324,6 +351,12 @@ export default function Timer() {
   const resetTimer = (): void => {
     setIsRunning(false)
     stopAlarm() // Stop alarm when resetting
+
+    // Reset timestamp tracking
+    startTimeRef.current = 0
+    initialTimeRef.current = 0
+    pausedTimeRef.current = 0
+
     if (mode === 'timer') {
       setTime((inputMinutes * 60 + inputSeconds) * 1000)
     } else if (mode === 'pomodoro') {
@@ -343,6 +376,11 @@ export default function Timer() {
     setMode(newMode)
     setIsRunning(false)
     stopAlarm() // Stop alarm when switching modes
+
+    // Reset timestamp tracking
+    startTimeRef.current = 0
+    initialTimeRef.current = 0
+    pausedTimeRef.current = 0
 
     if (newMode === 'timer') {
       setTime((inputMinutes * 60 + inputSeconds) * 1000)
@@ -425,9 +463,13 @@ export default function Timer() {
   useEffect(() => {
     if (isRunning) {
       intervalRef.current = setInterval(() => {
+        const now = Date.now()
+
         setTime((prevTime) => {
           if (mode === 'timer' || mode === 'pomodoro' || mode === 't-timer') {
-            const newTime = prevTime - 100 // Subtract 100ms
+            // Calculate actual elapsed time based on timestamps
+            const elapsed = now - startTimeRef.current
+            const newTime = initialTimeRef.current - elapsed
 
             // Update T-Timer total elapsed time
             if (mode === 't-timer') {
@@ -461,13 +503,15 @@ export default function Timer() {
               } else if (mode === 't-timer') {
                 // Don't stop running, just handle phase completion
                 handleTTimerComplete()
-                return getTTimerTime() // Return the new phase time
+                // The new time will be set by handleTTimerComplete, so return current time for now
+                return newTime
               }
             }
             return newTime
           } else {
-            // Stopwatch mode
-            return prevTime + 100 // Add 100ms
+            // Stopwatch mode - calculate elapsed time from start
+            const elapsed = now - startTimeRef.current
+            return elapsed
           }
         })
       }, 100) // Update every 100ms
