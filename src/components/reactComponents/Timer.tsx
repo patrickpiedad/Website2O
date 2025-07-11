@@ -1,17 +1,32 @@
-import type { JSX } from 'astro/jsx-runtime'
 import { useEffect, useRef, useState } from 'react'
 
-type TimerMode = 'timer' | 'stopwatch' | 'pomodoro'
+type TimerMode = 'timer' | 'stopwatch' | 'pomodoro' | 't-timer'
 type PomodoroPhase = 'work' | 'short-break' | 'long-break'
+type TTimerPhase = 'work' | 'rest'
+type TTimerMode = 'cycles' | 'total-time'
 
 interface PomodoroSettings {
   workTime: number
+  workTimeSeconds: number
   shortBreak: number
+  shortBreakSeconds: number
   longBreak: number
+  longBreakSeconds: number
   sessionsUntilLongBreak: number
 }
 
-export default function Timer(): JSX.Element {
+interface TTimerSettings {
+  workTime: number // minutes
+  workTimeSeconds: number // seconds
+  restTime: number // minutes
+  restTimeSeconds: number // seconds
+  cycles: number
+  totalTime: number // minutes
+  totalTimeSeconds: number // seconds
+  mode: TTimerMode
+}
+
+export default function Timer() {
   const [time, setTime] = useState<number>(0) // Time in milliseconds
   const [isRunning, setIsRunning] = useState<boolean>(false)
   const [mode, setMode] = useState<TimerMode>('timer')
@@ -26,12 +41,32 @@ export default function Timer(): JSX.Element {
   const [pomodoroPhase, setPomodoroPhase] = useState<PomodoroPhase>('work')
   const [pomodoroSettings, setPomodoroSettings] = useState<PomodoroSettings>({
     workTime: 25, // minutes
+    workTimeSeconds: 0, // seconds
     shortBreak: 5, // minutes
+    shortBreakSeconds: 0, // seconds
     longBreak: 15, // minutes
+    longBreakSeconds: 0, // seconds
     sessionsUntilLongBreak: 4
   })
   const [showPomodoroSettings, setShowPomodoroSettings] =
     useState<boolean>(false)
+
+  // T-Timer state
+  const [tTimerPhase, setTTimerPhase] = useState<TTimerPhase>('work')
+  const [tTimerCurrentCycle, setTTimerCurrentCycle] = useState<number>(1)
+  const [tTimerSettings, setTTimerSettings] = useState<TTimerSettings>({
+    workTime: 1, // minutes
+    workTimeSeconds: 0, // seconds
+    restTime: 0, // minutes
+    restTimeSeconds: 15, // seconds
+    cycles: 20,
+    totalTime: 20, // minutes
+    totalTimeSeconds: 0, // seconds
+    mode: 'cycles'
+  })
+  const [tTimerStartTime, setTTimerStartTime] = useState<number>(0)
+  const [tTimerTotalElapsed, setTTimerTotalElapsed] = useState<number>(0)
+  const [showTTimerSettings, setShowTTimerSettings] = useState<boolean>(false)
 
   // Initialize timer with proper default values
   useEffect(() => {
@@ -39,6 +74,8 @@ export default function Timer(): JSX.Element {
       setTime((inputMinutes * 60 + inputSeconds) * 1000)
     } else if (mode === 'pomodoro') {
       setTime(getPomodoroTime())
+    } else if (mode === 't-timer') {
+      setTime(getTTimerTime())
     } else {
       setTime(0)
     }
@@ -52,6 +89,11 @@ export default function Timer(): JSX.Element {
     const ms = Math.floor((Math.abs(milliseconds) % 1000) / 10) // Show centiseconds (00-99)
     const sign = milliseconds < 0 ? '-' : ''
     return `${sign}${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}:${ms.toString().padStart(2, '0')}`
+  }
+
+  // Format time for display (MM:SS format)
+  const formatTimeDisplay = (minutes: number, seconds: number): string => {
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
   }
 
   // Stop alarm
@@ -107,17 +149,126 @@ export default function Timer(): JSX.Element {
     }, 30000)
   }
 
+  // Play T-Timer triple beep
+  const playTTimerAlert = (): void => {
+    const playBeep = (): void => {
+      try {
+        const AudioContextClass =
+          window.AudioContext || (window as any).webkitAudioContext
+        const audioContext = new AudioContextClass()
+        const oscillator = audioContext.createOscillator()
+        const gainNode = audioContext.createGain()
+
+        oscillator.connect(gainNode)
+        gainNode.connect(audioContext.destination)
+
+        oscillator.frequency.setValueAtTime(1000, audioContext.currentTime)
+        oscillator.type = 'sine'
+
+        gainNode.gain.setValueAtTime(0.4, audioContext.currentTime)
+        gainNode.gain.exponentialRampToValueAtTime(
+          0.01,
+          audioContext.currentTime + 0.3
+        )
+
+        oscillator.start(audioContext.currentTime)
+        oscillator.stop(audioContext.currentTime + 0.3)
+      } catch (error) {
+        console.log('Audio not supported')
+        console.log(`'Error is:' ${error}`)
+      }
+    }
+
+    // Play 3 beeps with 300ms intervals
+    playBeep()
+    setTimeout(playBeep, 300)
+    setTimeout(playBeep, 600)
+  }
+
   // Get pomodoro time based on current phase
   const getPomodoroTime = (): number => {
     switch (pomodoroPhase) {
       case 'work':
-        return pomodoroSettings.workTime * 60 * 1000
+        return (
+          (pomodoroSettings.workTime * 60 + pomodoroSettings.workTimeSeconds) *
+          1000
+        )
       case 'short-break':
-        return pomodoroSettings.shortBreak * 60 * 1000
+        return (
+          (pomodoroSettings.shortBreak * 60 +
+            pomodoroSettings.shortBreakSeconds) *
+          1000
+        )
       case 'long-break':
-        return pomodoroSettings.longBreak * 60 * 1000
+        return (
+          (pomodoroSettings.longBreak * 60 +
+            pomodoroSettings.longBreakSeconds) *
+          1000
+        )
       default:
-        return pomodoroSettings.workTime * 60 * 1000
+        return (
+          (pomodoroSettings.workTime * 60 + pomodoroSettings.workTimeSeconds) *
+          1000
+        )
+    }
+  }
+
+  // Get T-Timer time based on current phase
+  const getTTimerTime = (): number => {
+    switch (tTimerPhase) {
+      case 'work':
+        return (
+          (tTimerSettings.workTime * 60 + tTimerSettings.workTimeSeconds) * 1000
+        )
+      case 'rest':
+        return (
+          (tTimerSettings.restTime * 60 + tTimerSettings.restTimeSeconds) * 1000
+        )
+      default:
+        return (
+          (tTimerSettings.workTime * 60 + tTimerSettings.workTimeSeconds) * 1000
+        )
+    }
+  }
+
+  // Check if T-Timer should stop
+  const shouldTTimerStop = (): boolean => {
+    if (tTimerSettings.mode === 'cycles') {
+      return tTimerCurrentCycle > tTimerSettings.cycles
+    } else {
+      const totalTimeMs =
+        (tTimerSettings.totalTime * 60 + tTimerSettings.totalTimeSeconds) * 1000
+      return tTimerTotalElapsed >= totalTimeMs
+    }
+  }
+
+  // Handle T-Timer phase completion
+  const handleTTimerComplete = (): void => {
+    playTTimerAlert()
+
+    if (tTimerPhase === 'work') {
+      // Work phase completed, start rest
+      setTTimerPhase('rest')
+      setTime(
+        (tTimerSettings.restTime * 60 + tTimerSettings.restTimeSeconds) * 1000
+      )
+    } else {
+      // Rest phase completed, check if we should stop before incrementing cycle
+      if (
+        tTimerSettings.mode === 'cycles' &&
+        tTimerCurrentCycle >= tTimerSettings.cycles
+      ) {
+        setIsRunning(false)
+        return
+      }
+
+      // Start next work cycle
+      const nextCycle = tTimerCurrentCycle + 1
+      setTTimerCurrentCycle(nextCycle)
+      setTTimerPhase('work')
+      setTime(
+        (tTimerSettings.workTime * 60 + tTimerSettings.workTimeSeconds) * 1000
+      )
     }
   }
 
@@ -147,16 +298,25 @@ export default function Timer(): JSX.Element {
     // Calculate time for the new phase
     const newTime =
       newPhase === 'work'
-        ? pomodoroSettings.workTime * 60 * 1000
+        ? (pomodoroSettings.workTime * 60 + pomodoroSettings.workTimeSeconds) *
+          1000
         : newPhase === 'short-break'
-          ? pomodoroSettings.shortBreak * 60 * 1000
-          : pomodoroSettings.longBreak * 60 * 1000
+          ? (pomodoroSettings.shortBreak * 60 +
+              pomodoroSettings.shortBreakSeconds) *
+            1000
+          : (pomodoroSettings.longBreak * 60 +
+              pomodoroSettings.longBreakSeconds) *
+            1000
 
     setTime(newTime)
   }
 
   // Start/stop timer
   const toggleTimer = (): void => {
+    if (!isRunning && mode === 't-timer') {
+      setTTimerStartTime(Date.now())
+      setTTimerTotalElapsed(0)
+    }
     setIsRunning(!isRunning)
   }
 
@@ -168,12 +328,17 @@ export default function Timer(): JSX.Element {
       setTime((inputMinutes * 60 + inputSeconds) * 1000)
     } else if (mode === 'pomodoro') {
       setTime(getPomodoroTime())
+    } else if (mode === 't-timer') {
+      setTTimerPhase('work')
+      setTTimerCurrentCycle(1)
+      setTTimerTotalElapsed(0)
+      setTime(getTTimerTime())
     } else {
       setTime(0)
     }
   }
 
-  // Switch between timer and stopwatch modes
+  // Switch between timer modes
   const switchMode = (newMode: TimerMode): void => {
     setMode(newMode)
     setIsRunning(false)
@@ -185,6 +350,11 @@ export default function Timer(): JSX.Element {
       setPomodoroSession(1)
       setPomodoroPhase('work')
       setTime(getPomodoroTime())
+    } else if (newMode === 't-timer') {
+      setTTimerPhase('work')
+      setTTimerCurrentCycle(1)
+      setTTimerTotalElapsed(0)
+      setTime(getTTimerTime())
     } else {
       setTime(0)
     }
@@ -218,24 +388,36 @@ export default function Timer(): JSX.Element {
   ): void => {
     const newSettings = {
       ...pomodoroSettings,
-      [setting]: Math.max(1, parseInt(value) || 1)
+      [setting]: Math.max(0, parseInt(value) || 0)
     }
     setPomodoroSettings(newSettings)
 
     // Update current timer if not running
     if (!isRunning && mode === 'pomodoro') {
-      const newTime =
-        setting === 'workTime' && pomodoroPhase === 'work'
-          ? newSettings.workTime * 60 * 1000
-          : setting === 'shortBreak' && pomodoroPhase === 'short-break'
-            ? newSettings.shortBreak * 60 * 1000
-            : setting === 'longBreak' && pomodoroPhase === 'long-break'
-              ? newSettings.longBreak * 60 * 1000
-              : time
+      setTime(getPomodoroTime())
+    }
+  }
 
-      if (newTime !== time) {
-        setTime(newTime)
-      }
+  // Handle T-Timer settings changes
+  const handleTTimerSettingChange = (
+    setting: keyof TTimerSettings,
+    value: string | TTimerMode
+  ): void => {
+    const newSettings = {
+      ...tTimerSettings,
+      [setting]:
+        typeof value === 'string' && setting !== 'mode'
+          ? Math.max(
+              setting === 'cycles' ? 1 : 0,
+              parseInt(value) || (setting === 'cycles' ? 1 : 0)
+            )
+          : value
+    }
+    setTTimerSettings(newSettings)
+
+    // Update current timer if not running
+    if (!isRunning && mode === 't-timer') {
+      setTime(getTTimerTime())
     }
   }
 
@@ -244,20 +426,43 @@ export default function Timer(): JSX.Element {
     if (isRunning) {
       intervalRef.current = setInterval(() => {
         setTime((prevTime) => {
-          if (mode === 'timer' || mode === 'pomodoro') {
+          if (mode === 'timer' || mode === 'pomodoro' || mode === 't-timer') {
             const newTime = prevTime - 100 // Subtract 100ms
-            if (newTime <= 0) {
-              setIsRunning(false)
-              playAlarm() // Play alarm when timer finishes
 
-              // Handle pomodoro auto-progression
-              if (mode === 'pomodoro') {
+            // Update T-Timer total elapsed time
+            if (mode === 't-timer') {
+              setTTimerTotalElapsed(Date.now() - tTimerStartTime)
+
+              // Check if total time limit reached
+              if (tTimerSettings.mode === 'total-time') {
+                const totalTimeMs =
+                  (tTimerSettings.totalTime * 60 +
+                    tTimerSettings.totalTimeSeconds) *
+                  1000
+                if (Date.now() - tTimerStartTime >= totalTimeMs) {
+                  setIsRunning(false)
+                  return 0
+                }
+              }
+            }
+
+            if (newTime <= 0) {
+              if (mode === 'timer') {
+                setIsRunning(false)
+                playAlarm() // Play alarm when timer finishes
+                return 0
+              } else if (mode === 'pomodoro') {
+                setIsRunning(false)
+                playAlarm() // Play alarm when timer finishes
                 setTimeout(() => {
                   handlePomodoroComplete()
                 }, 1000)
+                return 0
+              } else if (mode === 't-timer') {
+                // Don't stop running, just handle phase completion
+                handleTTimerComplete()
+                return getTTimerTime() // Return the new phase time
               }
-
-              return 0
             }
             return newTime
           } else {
@@ -277,7 +482,15 @@ export default function Timer(): JSX.Element {
         clearInterval(intervalRef.current)
       }
     }
-  }, [isRunning, mode, pomodoroPhase, pomodoroSettings])
+  }, [
+    isRunning,
+    mode,
+    pomodoroPhase,
+    pomodoroSettings,
+    tTimerPhase,
+    tTimerSettings,
+    tTimerStartTime
+  ])
 
   // Cleanup on unmount
   useEffect(() => {
@@ -327,8 +540,236 @@ export default function Timer(): JSX.Element {
             >
               Pomodoro
             </button>
+            <button
+              onClick={() => switchMode('t-timer')}
+              className={`rounded-md px-3 py-2 text-sm transition-colors ${
+                mode === 't-timer'
+                  ? 'bg-blue-600 text-white shadow-lg'
+                  : 'text-gray-300 hover:bg-gray-700 hover:text-gray-100'
+              }`}
+            >
+              T-Timer
+            </button>
           </div>
         </div>
+
+        {/* T-Timer Settings */}
+        {mode === 't-timer' && (
+          <div className="mb-4">
+            <button
+              onClick={() => setShowTTimerSettings(!showTTimerSettings)}
+              className="mb-2 text-sm text-blue-400 hover:text-blue-300"
+            >
+              {showTTimerSettings ? 'Hide' : 'Show'} Settings
+            </button>
+
+            {showTTimerSettings && (
+              <div className="mb-4 rounded-lg border border-gray-600 bg-gray-800 p-4">
+                <div className="mb-4">
+                  <label className="mb-2 block text-sm text-gray-300">
+                    Timer Mode
+                  </label>
+                  <div className="flex justify-center gap-2">
+                    <button
+                      onClick={() =>
+                        handleTTimerSettingChange('mode', 'cycles')
+                      }
+                      className={`rounded px-3 py-1 text-sm transition-colors ${
+                        tTimerSettings.mode === 'cycles'
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      }`}
+                    >
+                      Cycles
+                    </button>
+                    <button
+                      onClick={() =>
+                        handleTTimerSettingChange('mode', 'total-time')
+                      }
+                      className={`rounded px-3 py-1 text-sm transition-colors ${
+                        tTimerSettings.mode === 'total-time'
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      }`}
+                    >
+                      Total Time
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 text-sm">
+                  <div>
+                    <label className="mb-2 block text-gray-300">
+                      Work Time
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <div className="flex flex-col items-center">
+                        <input
+                          type="number"
+                          min="0"
+                          max="120"
+                          value={tTimerSettings.workTime}
+                          onChange={(e) =>
+                            handleTTimerSettingChange(
+                              'workTime',
+                              e.target.value
+                            )
+                          }
+                          className="w-16 rounded border border-gray-600 bg-gray-700 px-2 py-1 text-center text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <span className="mt-1 text-xs text-gray-400">min</span>
+                      </div>
+                      <span className="text-gray-400">:</span>
+                      <div className="flex flex-col items-center">
+                        <input
+                          type="number"
+                          min="0"
+                          max="59"
+                          value={tTimerSettings.workTimeSeconds}
+                          onChange={(e) =>
+                            handleTTimerSettingChange(
+                              'workTimeSeconds',
+                              e.target.value
+                            )
+                          }
+                          className="w-16 rounded border border-gray-600 bg-gray-700 px-2 py-1 text-center text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <span className="mt-1 text-xs text-gray-400">sec</span>
+                      </div>
+                      <span className="ml-2 text-gray-400">
+                        ={' '}
+                        {formatTimeDisplay(
+                          tTimerSettings.workTime,
+                          tTimerSettings.workTimeSeconds
+                        )}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-gray-300">
+                      Rest Time
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <div className="flex flex-col items-center">
+                        <input
+                          type="number"
+                          min="0"
+                          max="60"
+                          value={tTimerSettings.restTime}
+                          onChange={(e) =>
+                            handleTTimerSettingChange(
+                              'restTime',
+                              e.target.value
+                            )
+                          }
+                          className="w-16 rounded border border-gray-600 bg-gray-700 px-2 py-1 text-center text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <span className="mt-1 text-xs text-gray-400">min</span>
+                      </div>
+                      <span className="text-gray-400">:</span>
+                      <div className="flex flex-col items-center">
+                        <input
+                          type="number"
+                          min="0"
+                          max="59"
+                          value={tTimerSettings.restTimeSeconds}
+                          onChange={(e) =>
+                            handleTTimerSettingChange(
+                              'restTimeSeconds',
+                              e.target.value
+                            )
+                          }
+                          className="w-16 rounded border border-gray-600 bg-gray-700 px-2 py-1 text-center text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <span className="mt-1 text-xs text-gray-400">sec</span>
+                      </div>
+                      <span className="ml-2 text-gray-400">
+                        ={' '}
+                        {formatTimeDisplay(
+                          tTimerSettings.restTime,
+                          tTimerSettings.restTimeSeconds
+                        )}
+                      </span>
+                    </div>
+                  </div>
+
+                  {tTimerSettings.mode === 'cycles' && (
+                    <div>
+                      <label className="mb-1 block text-gray-300">
+                        Number of Cycles
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="20"
+                        value={tTimerSettings.cycles}
+                        onChange={(e) =>
+                          handleTTimerSettingChange('cycles', e.target.value)
+                        }
+                        className="w-full rounded border border-gray-600 bg-gray-700 px-2 py-1 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  )}
+
+                  {tTimerSettings.mode === 'total-time' && (
+                    <div>
+                      <label className="mb-2 block text-gray-300">
+                        Total Time
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <div className="flex flex-col items-center">
+                          <input
+                            type="number"
+                            min="0"
+                            max="480"
+                            value={tTimerSettings.totalTime}
+                            onChange={(e) =>
+                              handleTTimerSettingChange(
+                                'totalTime',
+                                e.target.value
+                              )
+                            }
+                            className="w-16 rounded border border-gray-600 bg-gray-700 px-2 py-1 text-center text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                          <span className="mt-1 text-xs text-gray-400">
+                            min
+                          </span>
+                        </div>
+                        <span className="text-gray-400">:</span>
+                        <div className="flex flex-col items-center">
+                          <input
+                            type="number"
+                            min="0"
+                            max="59"
+                            value={tTimerSettings.totalTimeSeconds}
+                            onChange={(e) =>
+                              handleTTimerSettingChange(
+                                'totalTimeSeconds',
+                                e.target.value
+                              )
+                            }
+                            className="w-16 rounded border border-gray-600 bg-gray-700 px-2 py-1 text-center text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                          <span className="mt-1 text-xs text-gray-400">
+                            sec
+                          </span>
+                        </div>
+                        <span className="ml-2 text-gray-400">
+                          ={' '}
+                          {formatTimeDisplay(
+                            tTimerSettings.totalTime,
+                            tTimerSettings.totalTimeSeconds
+                          )}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Pomodoro Settings */}
         {mode === 'pomodoro' && (
@@ -342,55 +783,151 @@ export default function Timer(): JSX.Element {
 
             {showPomodoroSettings && (
               <div className="mb-4 rounded-lg border border-gray-600 bg-gray-800 p-4">
-                <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="grid grid-cols-1 gap-4 text-sm">
                   <div>
-                    <label className="mb-1 block text-gray-300">
-                      Work Time (min)
+                    <label className="mb-2 block text-gray-300">
+                      Work Time
                     </label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="120"
-                      value={pomodoroSettings.workTime}
-                      onChange={(e) =>
-                        handlePomodoroSettingChange('workTime', e.target.value)
-                      }
-                      className="w-full rounded border border-gray-600 bg-gray-700 px-2 py-1 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
+                    <div className="flex items-center gap-2">
+                      <div className="flex flex-col items-center">
+                        <input
+                          type="number"
+                          min="0"
+                          max="120"
+                          value={pomodoroSettings.workTime}
+                          onChange={(e) =>
+                            handlePomodoroSettingChange(
+                              'workTime',
+                              e.target.value
+                            )
+                          }
+                          className="w-16 rounded border border-gray-600 bg-gray-700 px-2 py-1 text-center text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <span className="mt-1 text-xs text-gray-400">min</span>
+                      </div>
+                      <span className="text-gray-400">:</span>
+                      <div className="flex flex-col items-center">
+                        <input
+                          type="number"
+                          min="0"
+                          max="59"
+                          value={pomodoroSettings.workTimeSeconds}
+                          onChange={(e) =>
+                            handlePomodoroSettingChange(
+                              'workTimeSeconds',
+                              e.target.value
+                            )
+                          }
+                          className="w-16 rounded border border-gray-600 bg-gray-700 px-2 py-1 text-center text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <span className="mt-1 text-xs text-gray-400">sec</span>
+                      </div>
+                      <span className="ml-2 text-gray-400">
+                        ={' '}
+                        {formatTimeDisplay(
+                          pomodoroSettings.workTime,
+                          pomodoroSettings.workTimeSeconds
+                        )}
+                      </span>
+                    </div>
                   </div>
+
                   <div>
-                    <label className="mb-1 block text-gray-300">
-                      Short Break (min)
+                    <label className="mb-2 block text-gray-300">
+                      Short Break
                     </label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="60"
-                      value={pomodoroSettings.shortBreak}
-                      onChange={(e) =>
-                        handlePomodoroSettingChange(
-                          'shortBreak',
-                          e.target.value
-                        )
-                      }
-                      className="w-full rounded border border-gray-600 bg-gray-700 px-2 py-1 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
+                    <div className="flex items-center gap-2">
+                      <div className="flex flex-col items-center">
+                        <input
+                          type="number"
+                          min="0"
+                          max="60"
+                          value={pomodoroSettings.shortBreak}
+                          onChange={(e) =>
+                            handlePomodoroSettingChange(
+                              'shortBreak',
+                              e.target.value
+                            )
+                          }
+                          className="w-16 rounded border border-gray-600 bg-gray-700 px-2 py-1 text-center text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <span className="mt-1 text-xs text-gray-400">min</span>
+                      </div>
+                      <span className="text-gray-400">:</span>
+                      <div className="flex flex-col items-center">
+                        <input
+                          type="number"
+                          min="0"
+                          max="59"
+                          value={pomodoroSettings.shortBreakSeconds}
+                          onChange={(e) =>
+                            handlePomodoroSettingChange(
+                              'shortBreakSeconds',
+                              e.target.value
+                            )
+                          }
+                          className="w-16 rounded border border-gray-600 bg-gray-700 px-2 py-1 text-center text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <span className="mt-1 text-xs text-gray-400">sec</span>
+                      </div>
+                      <span className="ml-2 text-gray-400">
+                        ={' '}
+                        {formatTimeDisplay(
+                          pomodoroSettings.shortBreak,
+                          pomodoroSettings.shortBreakSeconds
+                        )}
+                      </span>
+                    </div>
                   </div>
+
                   <div>
-                    <label className="mb-1 block text-gray-300">
-                      Long Break (min)
+                    <label className="mb-2 block text-gray-300">
+                      Long Break
                     </label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="120"
-                      value={pomodoroSettings.longBreak}
-                      onChange={(e) =>
-                        handlePomodoroSettingChange('longBreak', e.target.value)
-                      }
-                      className="w-full rounded border border-gray-600 bg-gray-700 px-2 py-1 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
+                    <div className="flex items-center gap-2">
+                      <div className="flex flex-col items-center">
+                        <input
+                          type="number"
+                          min="0"
+                          max="120"
+                          value={pomodoroSettings.longBreak}
+                          onChange={(e) =>
+                            handlePomodoroSettingChange(
+                              'longBreak',
+                              e.target.value
+                            )
+                          }
+                          className="w-16 rounded border border-gray-600 bg-gray-700 px-2 py-1 text-center text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <span className="mt-1 text-xs text-gray-400">min</span>
+                      </div>
+                      <span className="text-gray-400">:</span>
+                      <div className="flex flex-col items-center">
+                        <input
+                          type="number"
+                          min="0"
+                          max="59"
+                          value={pomodoroSettings.longBreakSeconds}
+                          onChange={(e) =>
+                            handlePomodoroSettingChange(
+                              'longBreakSeconds',
+                              e.target.value
+                            )
+                          }
+                          className="w-16 rounded border border-gray-600 bg-gray-700 px-2 py-1 text-center text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <span className="mt-1 text-xs text-gray-400">sec</span>
+                      </div>
+                      <span className="ml-2 text-gray-400">
+                        ={' '}
+                        {formatTimeDisplay(
+                          pomodoroSettings.longBreak,
+                          pomodoroSettings.longBreakSeconds
+                        )}
+                      </span>
+                    </div>
                   </div>
+
                   <div>
                     <label className="mb-1 block text-gray-300">
                       Sessions Until Long Break
@@ -412,6 +949,80 @@ export default function Timer(): JSX.Element {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* T-Timer Status */}
+        {mode === 't-timer' && (
+          <div className="mb-4 rounded-lg border border-gray-600 bg-gray-800 p-3">
+            <div className="mb-2 text-sm text-gray-300">
+              {tTimerSettings.mode === 'cycles'
+                ? `Cycle ${tTimerCurrentCycle}/${tTimerSettings.cycles}`
+                : `Total: ${Math.floor(tTimerTotalElapsed / 60000)}:${Math.floor(
+                    (tTimerTotalElapsed % 60000) / 1000
+                  )
+                    .toString()
+                    .padStart(
+                      2,
+                      '0'
+                    )}/${formatTimeDisplay(tTimerSettings.totalTime, tTimerSettings.totalTimeSeconds)}`}{' '}
+              • {tTimerPhase === 'work' ? 'Work Time' : 'Rest Time'}
+            </div>
+            <div className="mb-2 flex justify-center">
+              <div className="flex max-w-full flex-wrap justify-center gap-1">
+                {tTimerSettings.mode === 'cycles' &&
+                  tTimerSettings.cycles <= 10 &&
+                  [...Array(tTimerSettings.cycles)].map((_, i) => (
+                    <div
+                      key={i}
+                      className={`h-2 w-6 rounded-full ${
+                        i < tTimerCurrentCycle - 1
+                          ? 'bg-green-500'
+                          : i === tTimerCurrentCycle - 1
+                            ? tTimerPhase === 'work'
+                              ? 'bg-blue-500'
+                              : 'bg-orange-500'
+                            : 'bg-gray-600'
+                      }`}
+                    />
+                  ))}
+                {tTimerSettings.mode === 'cycles' &&
+                  tTimerSettings.cycles > 10 && (
+                    <div className="flex flex-col items-center gap-1">
+                      <div className="h-2 w-32 rounded-full bg-gray-600">
+                        <div
+                          className="h-full rounded-full bg-blue-500 transition-all duration-300"
+                          style={{
+                            width: `${Math.min(100, (tTimerCurrentCycle / tTimerSettings.cycles) * 100)}%`
+                          }}
+                        />
+                      </div>
+                      <div className="text-xs text-gray-400">
+                        Cycle {tTimerCurrentCycle} of {tTimerSettings.cycles}
+                      </div>
+                    </div>
+                  )}
+                {tTimerSettings.mode === 'total-time' && (
+                  <div className="flex flex-col items-center gap-1">
+                    <div className="h-2 w-32 rounded-full bg-gray-600">
+                      <div
+                        className="h-full rounded-full bg-blue-500 transition-all duration-300"
+                        style={{
+                          width: `${Math.min(100, (tTimerTotalElapsed / ((tTimerSettings.totalTime * 60 + tTimerSettings.totalTimeSeconds) * 1000)) * 100)}%`
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div
+              className={`text-xs font-medium ${
+                tTimerPhase === 'work' ? 'text-blue-400' : 'text-orange-400'
+              }`}
+            >
+              {tTimerPhase === 'work' ? 'Focus Time!' : 'Rest Time!'}
+            </div>
           </div>
         )}
 
@@ -496,7 +1107,7 @@ export default function Timer(): JSX.Element {
         {/* Time Display */}
         <div
           className={`mb-6 font-mono text-5xl font-bold ${
-            (mode === 'timer' || mode === 'pomodoro') &&
+            (mode === 'timer' || mode === 'pomodoro' || mode === 't-timer') &&
             time <= 10000 &&
             time > 0
               ? 'text-red-400'
@@ -506,7 +1117,11 @@ export default function Timer(): JSX.Element {
                   ? 'text-red-300'
                   : mode === 'pomodoro'
                     ? 'text-green-300'
-                    : 'text-gray-100'
+                    : mode === 't-timer' && tTimerPhase === 'work'
+                      ? 'text-blue-300'
+                      : mode === 't-timer'
+                        ? 'text-orange-300'
+                        : 'text-gray-100'
           }`}
         >
           {formatTime(time)}
@@ -530,6 +1145,21 @@ export default function Timer(): JSX.Element {
                   Stop Alarm
                 </button>
               )}
+            </div>
+          )}
+
+        {/* T-Timer finished message */}
+        {mode === 't-timer' &&
+          !isRunning &&
+          ((tTimerSettings.mode === 'cycles' &&
+            tTimerCurrentCycle > tTimerSettings.cycles) ||
+            (tTimerSettings.mode === 'total-time' &&
+              tTimerTotalElapsed >=
+                (tTimerSettings.totalTime * 60 +
+                  tTimerSettings.totalTimeSeconds) *
+                  1000)) && (
+            <div className="mb-4 animate-pulse font-bold text-green-400">
+              T-Timer Complete! 🎉
             </div>
           )}
 
@@ -562,6 +1192,18 @@ export default function Timer(): JSX.Element {
               className="rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-blue-700"
             >
               Skip
+            </button>
+          )}
+
+          {mode === 't-timer' && (
+            <button
+              onClick={() => {
+                playTTimerAlert()
+                handleTTimerComplete()
+              }}
+              className="rounded-lg bg-purple-600 px-4 py-3 text-sm font-semibold text-white shadow-lg transition-colors hover:bg-purple-700"
+            >
+              Skip Phase
             </button>
           )}
         </div>
