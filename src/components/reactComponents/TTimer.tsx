@@ -1,80 +1,71 @@
-import { useState } from 'react'
-
-type TTimerPhase = 'chill' | 'push'
-type TTimerMode = 'cycles' | 'total-time'
-
-type TTimerSettings = {
-  chillTimeMinutes: number
-  chillTimeSeconds: number
-  pushTimeMinutes: number
-  pushTimeSeconds: number
-  cycles: number
-  totalTimeMinutes: number
-  totalTimeSeconds: number
-  mode: TTimerMode
-}
+import { TTimerControls } from './TTimer/TTimerControls'
+import { TTimerDisplay } from './TTimer/TTimerDisplay'
+import { TTimerSettings } from './TTimer/TTimerSettings'
+import { TTimerStatus } from './TTimer/TTimerStatus'
+import { CSS_CLASSES } from './TTimer/constants'
+import { useTTimer } from './TTimer/useTTimer'
 
 export default function TTimer() {
-  const [time, setTime] = useState<number>(0)
-  const [inputMinutes, setInputMinutes] = useState<number>(5)
-  const [inputSeconds, setInputSeconds] = useState<number>(0)
-
-  const [tTimerPhase, setTTimerPhase] = useState<TTimerPhase>('chill')
-  const [tTimerCurrentCycle, setTTimerCurrentCycle] = useState<number>(1)
-  const [tTimerSettings, setTTimerSettings] = useState<TTimerSettings>({
-    chillTimeMinutes: 1,
-    chillTimeSeconds: 0,
-    pushTimeMinutes: 0,
-    pushTimeSeconds: 15,
-    cycles: 20,
-    totalTimeMinutes: 20,
-    totalTimeSeconds: 0,
-    mode: 'cycles'
-  })
-
-  const [tTimerTotalElapsed, setTTimerTotalElapsed] = useState<number>(0)
-  const [showTTimerSettings, setShowTTimerSettings] = useState<boolean>(true)
+  const {
+    time,
+    isRunning,
+    tTimerPhase,
+    tTimerCurrentCycle,
+    tTimerSettings,
+    tTimerInputs,
+    tTimerTotalElapsed,
+    showTTimerSettings,
+    isComplete,
+    toggleTimer,
+    resetTimer,
+    skipPhase,
+    setShowTTimerSettings,
+    handleTTimerInputChange,
+    handleTTimerInputBlur,
+    handleTTimerModeChange
+  } = useTTimer()
 
   return (
-    <main className="shadow-2xl>T-Timer App mx-auto max-w-md rounded-lg border border-gray-700 bg-gray-900 p-6">
+    <div className={CSS_CLASSES.CONTAINER}>
       <div className="mb-6 text-center">
-        <button
-          className="mb-4 text-sm text-blue-400 hover:text-blue-200"
-          onClick={() => setShowTTimerSettings(!showTTimerSettings)}
-        >
-          {showTTimerSettings ? 'Hide' : 'Show'} Settings
-        </button>
+        <h1 className="mb-4 text-center text-2xl font-bold text-white">
+          T-Timer
+        </h1>
 
-        {showTTimerSettings && (
-          <div className="log mb-4 rounded border border-gray-600 bg-gray-800 p-4">
-            <div className="mb-4 border">
-              <label className="mb-2 block text-sm text-gray-300">
-                Timer Mode
-              </label>
-              <div className="flex justify-center gap-2">
-                <button
-                  className={`rounded px-3 py-1 text-sm transition-colors ${
-                    tTimerSettings.mode === 'cycles'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                  }`}
-                >
-                  Cycles
-                </button>
-                <button
-                  className={`rounded px-3 py-1 text-sm transition-colors ${
-                    tTimerSettings.mode === 'total-time'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                  }`}
-                >
-                  Total Time
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        <TTimerSettings
+          settings={tTimerSettings}
+          inputs={tTimerInputs}
+          showSettings={showTTimerSettings}
+          onToggleSettings={() => setShowTTimerSettings(!showTTimerSettings)}
+          onInputChange={handleTTimerInputChange}
+          onInputBlur={handleTTimerInputBlur}
+          onModeChange={handleTTimerModeChange}
+        />
+
+        <TTimerStatus
+          settings={tTimerSettings}
+          phase={tTimerPhase}
+          currentCycle={tTimerCurrentCycle}
+          totalElapsed={tTimerTotalElapsed}
+        />
+
+        <TTimerDisplay
+          time={time}
+          isRunning={isRunning}
+          phase={tTimerPhase}
+          currentCycle={tTimerCurrentCycle}
+          totalCycles={tTimerSettings.cycles}
+          isComplete={isComplete}
+        />
+
+        <TTimerControls
+          isRunning={isRunning}
+          phase={tTimerPhase}
+          onToggleTimer={toggleTimer}
+          onResetTimer={resetTimer}
+          onSkipPhase={skipPhase}
+        />
       </div>
-    </main>
+    </div>
   )
 }
