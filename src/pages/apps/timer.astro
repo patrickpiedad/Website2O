@@ -1,0 +1,18 @@
+---
+import PageLayout, {
+  type Props as PageLayoutProps
+} from '@/layouts/PageLayout.astro'
+import TimerApp from '../../components/reactComponents/Timer.tsx'
+
+const frontmatter: PageLayoutProps['frontmatter'] = {
+  title: '',
+  activeHeaderLink: 'Timer'
+}
+---
+
+<PageLayout {frontmatter}>
+  <h1 class="text-center">
+    {frontmatter.title}
+  </h1>
+  <TimerApp client:load />
+</PageLayout>

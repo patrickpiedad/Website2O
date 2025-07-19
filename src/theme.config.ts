@@ -11,7 +11,10 @@ export default defineThemeConfig({
     { label: 'Projects', href: '/projects' },
     {
       label: 'Apps',
-      children: [{ label: 'Timer', href: '/timer' }]
+      children: [
+        { label: 'Timer', href: '/apps/timer' },
+        { label: 'T-Timer', href: '/apps/ttimer' }
+      ]
     },
     { label: 'About', href: '/about' },
     { label: 'Tags', href: '/tags' }

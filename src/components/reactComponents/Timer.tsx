@@ -692,6 +692,7 @@ export default function Timer() {
 
   return (
     <div className="mx-auto max-w-md rounded-lg border border-gray-700 bg-gray-900 p-6 shadow-2xl">
+      <h1 className="text-center">Timer</h1>
       <div className="mb-6 text-center">
         {/* Mode Switch */}
         <div className="mb-4 flex justify-center">
