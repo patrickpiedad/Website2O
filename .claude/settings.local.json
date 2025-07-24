@@ -1,7 +1,14 @@
 {
   "permissions": {
     "allow": [
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(ls:*)",
+      "Bash(pnpm run:*)",
+      "Bash(npx prettier:*)",
+      "Bash(pnpm add:*)",
+      "Bash(rm:*)",
+      "Bash(true)",
+      "Bash(npm run build:*)"
     ],
     "deny": []
   }

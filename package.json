@@ -37,6 +37,8 @@
     "@astrojs/rss": "^4.0.12",
     "@astrojs/sitemap": "^3.4.1",
     "@astrojs/tailwind": "^6.0.2",
+    "@aws-sdk/client-s3": "^3.850.0",
+    "@aws-sdk/s3-request-presigner": "^3.850.0",
     "@fontsource/ibm-plex-sans": "^5.1.1",
     "@iconify-json/tabler": "^1.2.15",
     "@iconify/tailwind": "^1.2.0",
@@ -59,6 +61,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.18.0",
+    "@netlify/functions": "^4.1.15",
     "@typescript-eslint/parser": "^8.21.0",
     "commit-and-tag-version": "^12.5.0",
     "eslint": "^9.18.0",

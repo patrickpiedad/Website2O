@@ -13,7 +13,8 @@ export default defineThemeConfig({
       label: 'Apps',
       children: [
         { label: 'Timer', href: '/apps/timer' },
-        { label: 'T-Timer', href: '/apps/ttimer' }
+        { label: 'T-Timer', href: '/apps/ttimer' },
+        { label: 'MomentDrop', href: '/apps/moment-drop' }
       ]
     },
     { label: 'About', href: '/about' },
