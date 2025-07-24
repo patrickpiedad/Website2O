@@ -13,18 +13,29 @@ const MomentDrop: React.FC = () => {
   )
   const [photos, setPhotos] = useState<any[]>([])
   const [folderInfo, setFolderInfo] = useState<any>(null)
+  const [currentFacingMode, setCurrentFacingMode] = useState<'user' | 'environment'>('environment')
+  const [currentStream, setCurrentStream] = useState<MediaStream | null>(null)
 
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const photoLabelRef = useRef<HTMLInputElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Camera functionality
-  const startCamera = async () => {
+  const startCamera = async (facingMode: 'user' | 'environment' = currentFacingMode) => {
     try {
-      console.log('Starting camera...')
+      console.log('Starting camera with facing mode:', facingMode)
+      
+      // Stop existing stream if any
+      if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop())
+      }
+      
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: 'environment' } }
+        video: { facingMode: { ideal: facingMode } }
       })
+      setCurrentStream(stream)
+      setCurrentFacingMode(facingMode)
       console.log('Got camera stream:', stream)
 
       if (videoRef.current) {
@@ -101,6 +112,16 @@ const MomentDrop: React.FC = () => {
       'image/jpeg',
       0.8
     )
+  }
+
+  const flipCamera = async () => {
+    const newFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment'
+    try {
+      await startCamera(newFacingMode)
+    } catch (error) {
+      console.error('Failed to flip camera:', error)
+      showMessage('Failed to switch camera', 'error')
+    }
   }
 
   const uploadPhoto = async () => {
@@ -204,6 +225,50 @@ const MomentDrop: React.FC = () => {
       stream.getTracks().forEach((track) => track.stop())
       videoRef.current.srcObject = null
     }
+  }
+
+  const downloadPhoto = async (photo: any) => {
+    try {
+      const response = await fetch(photo.url)
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      
+      // Create filename
+      const timestamp = photo.timestamp ? new Date(photo.timestamp).toLocaleDateString().replace(/\//g, '-') : 'unknown'
+      const label = photo.label ? photo.label.replace(/[^a-zA-Z0-9]/g, '-') : 'photo'
+      const filename = `${timestamp}-${label}.jpg`
+      
+      link.download = filename
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+      
+      showMessage('Photo downloaded! 📥', 'success')
+    } catch (error) {
+      console.error('Download error:', error)
+      showMessage('Failed to download photo', 'error')
+    }
+  }
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file && file.type.startsWith('image/')) {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const dataUrl = e.target?.result as string
+        setCurrentPhoto({ file, dataUrl })
+      }
+      reader.readAsDataURL(file)
+    } else {
+      showMessage('Please select a valid image file', 'error')
+    }
+  }
+
+  const triggerFileSelect = () => {
+    fileInputRef.current?.click()
   }
 
   const showMessage = (text: string, type: string) => {
@@ -348,8 +413,9 @@ const MomentDrop: React.FC = () => {
                 }}
               >
                 {!cameraActive ? (
+                  <>
                   <button
-                    onClick={startCamera}
+                    onClick={() => startCamera()}
                     style={{
                       padding: '18px 36px',
                       border: 'none',
@@ -365,28 +431,73 @@ const MomentDrop: React.FC = () => {
                       maxWidth: '300px'
                     }}
                   >
-                    Start Camera
+                    📷 Start Camera
                   </button>
-                ) : (
                   <button
-                    onClick={capturePhoto}
-                    disabled={!videoReady}
+                    onClick={triggerFileSelect}
                     style={{
-                      padding: '18px 36px',
-                      border: '2px solid #f5e6d3',
+                      padding: '16px 32px',
+                      border: '2px solid #e3f2fd',
                       borderRadius: '12px',
-                      fontSize: '1.3rem',
+                      fontSize: '1.2rem',
                       fontWeight: 'bold',
-                      cursor: videoReady ? 'pointer' : 'not-allowed',
+                      cursor: 'pointer',
                       background: '#ffffff',
-                      color: '#34495e',
+                      color: '#1976d2',
+                      boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
                       width: '100%',
                       maxWidth: '300px',
-                      opacity: videoReady ? 1 : 0.6
+                      marginTop: '0.5rem'
                     }}
                   >
-                    {videoReady ? '📸 Take Photo' : '⏳ Loading camera...'}
+                    📁 Choose from Device
                   </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={capturePhoto}
+                      disabled={!videoReady}
+                      style={{
+                        padding: '18px 36px',
+                        border: '2px solid #f5e6d3',
+                        borderRadius: '12px',
+                        fontSize: '1.3rem',
+                        fontWeight: 'bold',
+                        cursor: videoReady ? 'pointer' : 'not-allowed',
+                        background: '#ffffff',
+                        color: '#34495e',
+                        width: '100%',
+                        maxWidth: '300px',
+                        opacity: videoReady ? 1 : 0.6
+                      }}
+                    >
+                      {videoReady ? '📸 Take Photo' : '⏳ Loading camera...'}
+                    </button>
+                    {cameraActive && (
+                      <button
+                        onClick={flipCamera}
+                        disabled={!videoReady}
+                        style={{
+                          padding: '12px 20px',
+                          border: '2px solid #e3f2fd',
+                          borderRadius: '12px',
+                          fontSize: '1.1rem',
+                          fontWeight: 'bold',
+                          cursor: videoReady ? 'pointer' : 'not-allowed',
+                          background: '#ffffff',
+                          color: '#1976d2',
+                          marginTop: '1rem',
+                          width: '100%',
+                          maxWidth: '300px',
+                          opacity: videoReady ? 1 : 0.6
+                        }}
+                        title={`Switch to ${currentFacingMode === 'environment' ? 'front' : 'back'} camera`}
+                      >
+                        🔄 Flip Camera
+                      </button>
+                    )}
+                  </>
                 )}
               </div>
             </div>
@@ -641,6 +752,30 @@ const MomentDrop: React.FC = () => {
                         >
                           {formatTimestamp(photo.timestamp)}
                         </div>
+                        <button
+                          onClick={() => downloadPhoto(photo)}
+                          style={{
+                            padding: '8px 16px',
+                            border: '2px solid #e3f2fd',
+                            borderRadius: '8px',
+                            fontSize: '0.9rem',
+                            fontWeight: 'bold',
+                            cursor: 'pointer',
+                            background: '#ffffff',
+                            color: '#1976d2',
+                            width: '100%',
+                            marginTop: '0.5rem',
+                            transition: 'all 0.3s ease'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = '#e3f2fd'
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = '#ffffff'
+                          }}
+                        >
+                          📥 Download
+                        </button>
                       </div>
                     </div>
                   ))
@@ -666,6 +801,13 @@ const MomentDrop: React.FC = () => {
 
       {/* Hidden canvas for photo capture */}
       <canvas ref={canvasRef} style={{ display: 'none' }} />
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFileSelect}
+        style={{ display: 'none' }}
+      />
     </div>
   )
 }
