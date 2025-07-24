@@ -541,17 +541,22 @@
           <div class="gallery-header">
             <h2>📖 Photo Gallery</h2>
             <p>Recent wedding photos from all guests</p>
+            <button id="toggleGalleryBtn" class="btn btn-primary">
+              📖 View Gallery
+            </button>
           </div>
 
-          <div id="folderInfo" class="folder-info">
-            <p>Loading gallery information...</p>
-          </div>
+          <div id="galleryContent" style="display: none;">
+            <div id="folderInfo" class="folder-info">
+              <p>Loading gallery information...</p>
+            </div>
 
-          <div id="photoGrid" class="photo-grid">
-            <!-- Photos will be loaded here -->
-          </div>
+            <div id="photoGrid" class="photo-grid">
+              <!-- Photos will be loaded here -->
+            </div>
 
-          <div id="galleryMessage" class="message" style="display: none;"></div>
+            <div id="galleryMessage" class="message" style="display: none;"></div>
+          </div>
         </section>
       </main>
 
@@ -573,6 +578,7 @@
           this.uploadManager = new UploadManager()
           this.galleryManager = new GalleryManager()
           this.currentPhoto = null
+          this.galleryVisible = false
 
           // Initialize DOM element references
           this.startCameraBtn = null
@@ -591,10 +597,11 @@
           this.folderInfo = null
           this.photoGrid = null
           this.galleryMessage = null
+          this.toggleGalleryBtn = null
+          this.galleryContent = null
 
           this.initializeElements()
           this.bindEvents()
-          this.loadGallery()
         }
 
         initializeElements() {
@@ -623,6 +630,8 @@
           this.folderInfo = document.getElementById('folderInfo')
           this.photoGrid = document.getElementById('photoGrid')
           this.galleryMessage = document.getElementById('galleryMessage')
+          this.toggleGalleryBtn = document.getElementById('toggleGalleryBtn')
+          this.galleryContent = document.getElementById('galleryContent')
         }
 
         bindEvents() {
@@ -632,6 +641,7 @@
           this.captureBtn.addEventListener('click', () => this.capturePhoto())
           this.retakeBtn.addEventListener('click', () => this.retakePhoto())
           this.uploadBtn.addEventListener('click', () => this.uploadPhoto())
+          this.toggleGalleryBtn.addEventListener('click', () => this.toggleGallery())
         }
 
         async startCamera() {
@@ -698,7 +708,10 @@
 
             this.showMessage('Photo uploaded successfully! 🎉', 'success')
             this.resetForm()
-            this.loadGallery() // Refresh gallery
+            // Refresh gallery if it's visible
+            if (this.galleryVisible) {
+              this.loadGallery()
+            }
           } catch (error) {
             console.error('Upload error:', error)
             this.showMessage(`Upload failed: ${error.message}`, 'error')
@@ -721,6 +734,23 @@
 
           // Stop camera
           this.cameraManager.stopCamera()
+        }
+
+        async toggleGallery() {
+          if (this.galleryVisible) {
+            // Hide gallery
+            this.galleryContent.style.display = 'none'
+            this.toggleGalleryBtn.textContent = '📖 View Gallery'
+            this.galleryVisible = false
+          } else {
+            // Show gallery and load photos
+            this.galleryContent.style.display = 'block'
+            this.toggleGalleryBtn.textContent = '📖 Hide Gallery'
+            this.galleryVisible = true
+            
+            // Load gallery for the first time or refresh
+            await this.loadGallery()
+          }
         }
 
         async loadGallery() {
