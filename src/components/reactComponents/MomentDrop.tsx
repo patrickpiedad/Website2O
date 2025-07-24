@@ -13,7 +13,9 @@ const MomentDrop: React.FC = () => {
   )
   const [photos, setPhotos] = useState<any[]>([])
   const [folderInfo, setFolderInfo] = useState<any>(null)
-  const [currentFacingMode, setCurrentFacingMode] = useState<'user' | 'environment'>('environment')
+  const [currentFacingMode, setCurrentFacingMode] = useState<
+    'user' | 'environment'
+  >('environment')
   const [currentStream, setCurrentStream] = useState<MediaStream | null>(null)
 
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -22,15 +24,17 @@ const MomentDrop: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Camera functionality
-  const startCamera = async (facingMode: 'user' | 'environment' = currentFacingMode) => {
+  const startCamera = async (
+    facingMode: 'user' | 'environment' = currentFacingMode
+  ) => {
     try {
       console.log('Starting camera with facing mode:', facingMode)
-      
+
       // Stop existing stream if any
       if (currentStream) {
-        currentStream.getTracks().forEach(track => track.stop())
+        currentStream.getTracks().forEach((track) => track.stop())
       }
-      
+
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: { ideal: facingMode } }
       })
@@ -115,7 +119,8 @@ const MomentDrop: React.FC = () => {
   }
 
   const flipCamera = async () => {
-    const newFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment'
+    const newFacingMode =
+      currentFacingMode === 'environment' ? 'user' : 'environment'
     try {
       await startCamera(newFacingMode)
     } catch (error) {
@@ -231,7 +236,7 @@ const MomentDrop: React.FC = () => {
     try {
       let response: Response
       let blob: Blob
-      
+
       try {
         // Try direct fetch first
         response = await fetch(photo.url)
@@ -248,22 +253,26 @@ const MomentDrop: React.FC = () => {
         }
         blob = await response.blob()
       }
-      
+
       const url = window.URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
-      
+
       // Create filename
-      const timestamp = photo.timestamp ? new Date(photo.timestamp).toLocaleDateString().replace(/\//g, '-') : 'unknown'
-      const label = photo.label ? photo.label.replace(/[^a-zA-Z0-9]/g, '-') : 'photo'
+      const timestamp = photo.timestamp
+        ? new Date(photo.timestamp).toLocaleDateString().replace(/\//g, '-')
+        : 'unknown'
+      const label = photo.label
+        ? photo.label.replace(/[^a-zA-Z0-9]/g, '-')
+        : 'photo'
       const filename = `${timestamp}-${label}.jpg`
-      
+
       link.download = filename
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
       window.URL.revokeObjectURL(url)
-      
+
       showMessage('Photo downloaded! 📥', 'success')
     } catch (error) {
       console.error('Download error:', error)
@@ -274,25 +283,34 @@ const MomentDrop: React.FC = () => {
   const downloadAllPhotos = async () => {
     try {
       showMessage('Loading all photos... This may take a moment', 'success')
-      
+
       // First, load ALL photos (not just the 20 displayed)
-      const allPhotosResponse = await fetch('/.netlify/functions/recent-photos?limit=1000')
+      const allPhotosResponse = await fetch(
+        '/.netlify/functions/recent-photos?limit=1000'
+      )
       if (!allPhotosResponse.ok) {
         throw new Error('Failed to load all photos')
       }
-      
+
       const allPhotosResult = await allPhotosResponse.json()
-      if (!allPhotosResult.success || !allPhotosResult.data || allPhotosResult.data.length === 0) {
+      if (
+        !allPhotosResult.success ||
+        !allPhotosResult.data ||
+        allPhotosResult.data.length === 0
+      ) {
         showMessage('No photos to download', 'error')
         return
       }
-      
+
       const allPhotos = allPhotosResult.data
-      showMessage(`Found ${allPhotos.length} photos. Preparing download...`, 'success')
-      
+      showMessage(
+        `Found ${allPhotos.length} photos. Preparing download...`,
+        'success'
+      )
+
       // Check if we're on mobile/iOS
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
-      
+
       if (isMobile || allPhotos.length > 5) {
         // For mobile or many photos, create a zip file
         const JSZip = (window as any).JSZip
@@ -300,7 +318,7 @@ const MomentDrop: React.FC = () => {
           // Fallback: download photos one by one with delay
           showMessage('Downloading photos one by one...', 'success')
           for (let i = 0; i < allPhotos.length; i++) {
-            await new Promise(resolve => setTimeout(resolve, 1000)) // 1 second delay
+            await new Promise((resolve) => setTimeout(resolve, 1000)) // 1 second delay
             await downloadPhoto(allPhotos[i])
           }
           return
@@ -308,14 +326,14 @@ const MomentDrop: React.FC = () => {
 
         const zip = new JSZip()
         const folder = zip.folder('wedding-photos')
-        
+
         // Add each photo to the zip
         for (let i = 0; i < allPhotos.length; i++) {
           const photo = allPhotos[i]
           try {
             let response: Response
             let blob: Blob
-            
+
             try {
               // Try direct fetch first (may fail due to CORS in dev)
               response = await fetch(photo.url)
@@ -326,7 +344,7 @@ const MomentDrop: React.FC = () => {
             } catch (directFetchError) {
               // Direct fetch failed (likely CORS), silently try proxy
               const proxyUrl = `/.netlify/functions/download-photo?url=${encodeURIComponent(photo.url)}`
-              
+
               try {
                 response = await fetch(proxyUrl)
                 if (!response.ok) {
@@ -334,22 +352,31 @@ const MomentDrop: React.FC = () => {
                 }
                 blob = await response.blob()
               } catch (proxyError) {
-                console.error(`Both direct and proxy fetch failed for photo ${i + 1}:`, proxyError)
+                console.error(
+                  `Both direct and proxy fetch failed for photo ${i + 1}:`,
+                  proxyError
+                )
                 continue
               }
             }
-            
+
             // Create filename
-            const timestamp = photo.timestamp ? new Date(photo.timestamp).toLocaleDateString().replace(/\//g, '-') : 'unknown'
-            const label = photo.label ? photo.label.replace(/[^a-zA-Z0-9]/g, '-') : 'photo'
+            const timestamp = photo.timestamp
+              ? new Date(photo.timestamp)
+                  .toLocaleDateString()
+                  .replace(/\//g, '-')
+              : 'unknown'
+            const label = photo.label
+              ? photo.label.replace(/[^a-zA-Z0-9]/g, '-')
+              : 'photo'
             const filename = `${i + 1}-${timestamp}-${label}.jpg`
-            
+
             folder?.file(filename, blob)
           } catch (error) {
             console.error(`Failed to add photo ${i + 1} to zip:`, error)
           }
         }
-        
+
         // Generate and download zip
         const zipBlob = await zip.generateAsync({ type: 'blob' })
         const url = window.URL.createObjectURL(zipBlob)
@@ -360,13 +387,16 @@ const MomentDrop: React.FC = () => {
         link.click()
         document.body.removeChild(link)
         window.URL.revokeObjectURL(url)
-        
-        showMessage(`All ${allPhotos.length} photos downloaded as zip file! 📦`, 'success')
+
+        showMessage(
+          `All ${allPhotos.length} photos downloaded as zip file! 📦`,
+          'success'
+        )
       } else {
         // For desktop with few photos, download individually with small delays
         for (let i = 0; i < allPhotos.length; i++) {
           if (i > 0) {
-            await new Promise(resolve => setTimeout(resolve, 500)) // Small delay between downloads
+            await new Promise((resolve) => setTimeout(resolve, 500)) // Small delay between downloads
           }
           await downloadPhoto(allPhotos[i])
         }
@@ -438,10 +468,13 @@ const MomentDrop: React.FC = () => {
               textShadow: '2px 2px 4px rgba(0, 0, 0, 0.1)'
             }}
           >
-            📸 MomentDrop
+            💍 MomentDrop
           </h1>
+          <p style={{ fontSize: '1.8rem', fontStyle: 'italic', opacity: 0.8 }}>
+            The Piedad Wedding ❤️
+          </p>
           <p style={{ fontSize: '1.2rem', fontStyle: 'italic', opacity: 0.8 }}>
-            Share your wedding moments instantly
+            Chiemsee, Germany
           </p>
         </header>
 
@@ -490,7 +523,7 @@ const MomentDrop: React.FC = () => {
                       opacity: 0.7
                     }}
                   >
-                    📷
+                    📸
                   </div>
                   <h2
                     style={{
@@ -503,7 +536,7 @@ const MomentDrop: React.FC = () => {
                     MomentDrop
                   </h2>
                   <p style={{ fontSize: '1rem', opacity: 0.8, margin: 0 }}>
-                    Capture & share wedding memories
+                    Remember to add a label to your photo!
                   </p>
                 </div>
 
@@ -539,44 +572,44 @@ const MomentDrop: React.FC = () => {
               >
                 {!cameraActive ? (
                   <>
-                  <button
-                    onClick={() => startCamera()}
-                    style={{
-                      padding: '18px 36px',
-                      border: 'none',
-                      borderRadius: '12px',
-                      fontSize: '1.3rem',
-                      fontWeight: 'bold',
-                      cursor: 'pointer',
-                      background:
-                        'linear-gradient(135deg, #f8bbd9 0%, #e91e63 100%)',
-                      color: '#ffffff',
-                      boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
-                      width: '100%',
-                      maxWidth: '300px'
-                    }}
-                  >
-                    📷 Start Camera
-                  </button>
-                  <button
-                    onClick={triggerFileSelect}
-                    style={{
-                      padding: '16px 32px',
-                      border: '2px solid #e3f2fd',
-                      borderRadius: '12px',
-                      fontSize: '1.2rem',
-                      fontWeight: 'bold',
-                      cursor: 'pointer',
-                      background: '#ffffff',
-                      color: '#1976d2',
-                      boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
-                      width: '100%',
-                      maxWidth: '300px',
-                      marginTop: '0.5rem'
-                    }}
-                  >
-                    📁 Choose from Device
-                  </button>
+                    <button
+                      onClick={() => startCamera()}
+                      style={{
+                        padding: '18px 36px',
+                        border: 'none',
+                        borderRadius: '12px',
+                        fontSize: '1.3rem',
+                        fontWeight: 'bold',
+                        cursor: 'pointer',
+                        background:
+                          'linear-gradient(135deg, #f8bbd9 0%, #e91e63 100%)',
+                        color: '#ffffff',
+                        boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+                        width: '100%',
+                        maxWidth: '300px'
+                      }}
+                    >
+                      📷 Start Camera
+                    </button>
+                    <button
+                      onClick={triggerFileSelect}
+                      style={{
+                        padding: '16px 32px',
+                        border: '2px solid #e3f2fd',
+                        borderRadius: '12px',
+                        fontSize: '1.2rem',
+                        fontWeight: 'bold',
+                        cursor: 'pointer',
+                        background: '#ffffff',
+                        color: '#1976d2',
+                        boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+                        width: '100%',
+                        maxWidth: '300px',
+                        marginTop: '0.5rem'
+                      }}
+                    >
+                      📁 Choose from Device
+                    </button>
                   </>
                 ) : (
                   <>
@@ -775,10 +808,10 @@ const MomentDrop: React.FC = () => {
                 marginBottom: '0.5rem'
               }}
             >
-              📖 Photo Gallery
+              🖼️ Photo Gallery
             </h2>
             <p style={{ marginBottom: '1rem' }}>
-              Recent wedding photos from all guests
+              Recent wedding photos from all guests!
             </p>
             <button
               onClick={toggleGallery}
@@ -946,7 +979,7 @@ const MomentDrop: React.FC = () => {
             fontSize: '0.9rem'
           }}
         >
-          <p>Made with ❤️ for your special day</p>
+          <p>© 2025 Patrick Piedad</p>
         </footer>
       </div>
 
