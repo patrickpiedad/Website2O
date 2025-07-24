@@ -229,8 +229,26 @@ const MomentDrop: React.FC = () => {
 
   const downloadPhoto = async (photo: any) => {
     try {
-      const response = await fetch(photo.url)
-      const blob = await response.blob()
+      let response: Response
+      let blob: Blob
+      
+      try {
+        // Try direct fetch first
+        response = await fetch(photo.url)
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`)
+        }
+        blob = await response.blob()
+      } catch (directFetchError) {
+        // Direct fetch failed (likely CORS), try proxy
+        const proxyUrl = `/.netlify/functions/download-photo?url=${encodeURIComponent(photo.url)}`
+        response = await fetch(proxyUrl)
+        if (!response.ok) {
+          throw new Error(`Proxy fetch failed: HTTP ${response.status}`)
+        }
+        blob = await response.blob()
+      }
+      
       const url = window.URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
@@ -250,6 +268,113 @@ const MomentDrop: React.FC = () => {
     } catch (error) {
       console.error('Download error:', error)
       showMessage('Failed to download photo', 'error')
+    }
+  }
+
+  const downloadAllPhotos = async () => {
+    try {
+      showMessage('Loading all photos... This may take a moment', 'success')
+      
+      // First, load ALL photos (not just the 20 displayed)
+      const allPhotosResponse = await fetch('/.netlify/functions/recent-photos?limit=1000')
+      if (!allPhotosResponse.ok) {
+        throw new Error('Failed to load all photos')
+      }
+      
+      const allPhotosResult = await allPhotosResponse.json()
+      if (!allPhotosResult.success || !allPhotosResult.data || allPhotosResult.data.length === 0) {
+        showMessage('No photos to download', 'error')
+        return
+      }
+      
+      const allPhotos = allPhotosResult.data
+      showMessage(`Found ${allPhotos.length} photos. Preparing download...`, 'success')
+      
+      // Check if we're on mobile/iOS
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+      
+      if (isMobile || allPhotos.length > 5) {
+        // For mobile or many photos, create a zip file
+        const JSZip = (window as any).JSZip
+        if (!JSZip) {
+          // Fallback: download photos one by one with delay
+          showMessage('Downloading photos one by one...', 'success')
+          for (let i = 0; i < allPhotos.length; i++) {
+            await new Promise(resolve => setTimeout(resolve, 1000)) // 1 second delay
+            await downloadPhoto(allPhotos[i])
+          }
+          return
+        }
+
+        const zip = new JSZip()
+        const folder = zip.folder('wedding-photos')
+        
+        // Add each photo to the zip
+        for (let i = 0; i < allPhotos.length; i++) {
+          const photo = allPhotos[i]
+          try {
+            let response: Response
+            let blob: Blob
+            
+            try {
+              // Try direct fetch first (may fail due to CORS in dev)
+              response = await fetch(photo.url)
+              if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`)
+              }
+              blob = await response.blob()
+            } catch (directFetchError) {
+              // Direct fetch failed (likely CORS), silently try proxy
+              const proxyUrl = `/.netlify/functions/download-photo?url=${encodeURIComponent(photo.url)}`
+              
+              try {
+                response = await fetch(proxyUrl)
+                if (!response.ok) {
+                  throw new Error(`Proxy fetch failed: HTTP ${response.status}`)
+                }
+                blob = await response.blob()
+              } catch (proxyError) {
+                console.error(`Both direct and proxy fetch failed for photo ${i + 1}:`, proxyError)
+                continue
+              }
+            }
+            
+            // Create filename
+            const timestamp = photo.timestamp ? new Date(photo.timestamp).toLocaleDateString().replace(/\//g, '-') : 'unknown'
+            const label = photo.label ? photo.label.replace(/[^a-zA-Z0-9]/g, '-') : 'photo'
+            const filename = `${i + 1}-${timestamp}-${label}.jpg`
+            
+            folder?.file(filename, blob)
+          } catch (error) {
+            console.error(`Failed to add photo ${i + 1} to zip:`, error)
+          }
+        }
+        
+        // Generate and download zip
+        const zipBlob = await zip.generateAsync({ type: 'blob' })
+        const url = window.URL.createObjectURL(zipBlob)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = `wedding-photos-${new Date().toLocaleDateString().replace(/\//g, '-')}.zip`
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        window.URL.revokeObjectURL(url)
+        
+        showMessage(`All ${allPhotos.length} photos downloaded as zip file! 📦`, 'success')
+      } else {
+        // For desktop with few photos, download individually with small delays
+        for (let i = 0; i < allPhotos.length; i++) {
+          if (i > 0) {
+            await new Promise(resolve => setTimeout(resolve, 500)) // Small delay between downloads
+          }
+          await downloadPhoto(allPhotos[i])
+        }
+        showMessage(`All ${allPhotos.length} photos downloaded! 📥`, 'success')
+      }
+    } catch (error) {
+      console.error('Download all error:', error)
+      showMessage('Failed to download all photos', 'error')
     }
   }
 
@@ -671,6 +796,25 @@ const MomentDrop: React.FC = () => {
             >
               {galleryVisible ? '📖 Hide Gallery' : '📖 View Gallery'}
             </button>
+            {galleryVisible && photos.length > 0 && (
+              <button
+                onClick={downloadAllPhotos}
+                style={{
+                  padding: '14px 28px',
+                  border: '2px solid #e3f2fd',
+                  borderRadius: '12px',
+                  fontSize: '1.1rem',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  background: '#ffffff',
+                  color: '#1976d2',
+                  boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+                  marginTop: '1rem'
+                }}
+              >
+                📥 Download All Photos ({photos.length})
+              </button>
+            )}
           </div>
 
           {galleryVisible && (
@@ -725,11 +869,18 @@ const MomentDrop: React.FC = () => {
                         src={photo.url}
                         alt={photo.label || 'Wedding photo'}
                         loading="lazy"
+                        crossOrigin="anonymous"
                         style={{
                           width: '100%',
                           height: '200px',
-                          objectFit: 'cover'
+                          objectFit: 'cover',
+                          cursor: 'pointer'
                         }}
+                        onContextMenu={(e) => {
+                          // Allow native context menu for mobile save functionality
+                          e.stopPropagation()
+                        }}
+                        title="Press and hold to save on mobile, or use download button"
                       />
                       <div style={{ padding: '1rem' }}>
                         {photo.label && (

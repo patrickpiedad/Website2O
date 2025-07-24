@@ -49,7 +49,8 @@ export const handler: Handler = async (
     // Get limit from query parameters
     const queryParams = event.queryStringParameters || {}
     const requestedLimit = parseInt(queryParams.limit || '20', 10)
-    const limit = Math.min(Math.max(requestedLimit, 1), 50) // Clamp between 1 and 50
+    // Allow higher limits for download all functionality, but cap at 1000 for safety
+    const limit = Math.min(Math.max(requestedLimit, 1), 1000)
 
     // Initialize S3 manager
     const s3Config = getS3Config()
