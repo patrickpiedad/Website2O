@@ -19,14 +19,37 @@ const MomentDrop: React.FC = () => {
   // Camera functionality
   const startCamera = async () => {
     try {
+      console.log('Starting camera...')
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: { facingMode: { ideal: 'environment' } }
       })
+      console.log('Got camera stream:', stream)
+      
       if (videoRef.current) {
+        console.log('Setting video source...')
         videoRef.current.srcObject = stream
         setCameraActive(true)
-        // Ensure video plays
-        await videoRef.current.play()
+        
+        // Wait for video to be ready
+        videoRef.current.onloadedmetadata = () => {
+          console.log('Video metadata loaded, dimensions:', videoRef.current?.videoWidth, 'x', videoRef.current?.videoHeight)
+          console.log('Starting video play...')
+          setVideoReady(true)
+          videoRef.current?.play().then(() => {
+            console.log('Video playing successfully')
+          }).catch((playError) => {
+            console.error('Video play error:', playError)
+            showMessage('Failed to start video', 'error')
+          })
+        }
+        
+        // Also handle the playing event
+        videoRef.current.onplaying = () => {
+          console.log('Video is now playing')
+        }
+      } else {
+        console.error('Video ref is null')
+        showMessage('Video element not found', 'error')
       }
     } catch (error) {
       console.error('Camera error:', error)
@@ -223,29 +246,40 @@ const MomentDrop: React.FC = () => {
                 justifyContent: 'center',
                 background: '#f8f9fa'
               }}>
-                {!cameraActive ? (
-                  <div style={{
-                    textAlign: 'center',
-                    color: '#34495e'
-                  }}>
-                    <div style={{ fontSize: '4rem', marginBottom: '1rem', opacity: 0.7 }}>📷</div>
-                    <h2 style={{ fontSize: '2rem', marginBottom: '0.5rem', color: '#2c3e50', fontWeight: 'bold' }}>
-                      MomentDrop
-                    </h2>
-                    <p style={{ fontSize: '1rem', opacity: 0.8, margin: 0 }}>
-                      Capture & share wedding memories
-                    </p>
-                  </div>
-                ) : (
-                  <video 
-                    ref={videoRef} 
-                    autoPlay 
-                    playsInline 
-                    style={{ width: '100%', height: 'auto' }}
-                    onLoadedMetadata={() => setVideoReady(true)}
-                    onError={() => showMessage('Video error occurred', 'error')}
-                  />
-                )}
+                {/* Placeholder - shown when camera is not active */}
+                <div style={{
+                  textAlign: 'center',
+                  color: '#34495e',
+                  display: !cameraActive ? 'block' : 'none'
+                }}>
+                  <div style={{ fontSize: '4rem', marginBottom: '1rem', opacity: 0.7 }}>📷</div>
+                  <h2 style={{ fontSize: '2rem', marginBottom: '0.5rem', color: '#2c3e50', fontWeight: 'bold' }}>
+                    MomentDrop
+                  </h2>
+                  <p style={{ fontSize: '1rem', opacity: 0.8, margin: 0 }}>
+                    Capture & share wedding memories
+                  </p>
+                </div>
+                
+                {/* Video - always present but conditionally visible */}
+                <video 
+                  ref={videoRef} 
+                  autoPlay 
+                  playsInline 
+                  muted
+                  style={{ 
+                    width: '100%', 
+                    height: 'auto',
+                    display: cameraActive ? 'block' : 'none',
+                    position: cameraActive ? 'relative' : 'absolute',
+                    top: 0,
+                    left: 0
+                  }}
+                  onError={(e) => {
+                    console.error('Video error:', e)
+                    showMessage('Video error occurred', 'error')
+                  }}
+                />
               </div>
 
               {/* Camera Controls */}
