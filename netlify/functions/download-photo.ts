@@ -41,7 +41,8 @@ export const handler: Handler = async (
     }
 
     // Validate that it's from our S3 bucket
-    if (!photoUrl.includes('momentdrop-thepiedadwedding.s3.amazonaws.com')) {
+    const bucketName = process.env.S3_BUCKET_NAME || process.env.AWS_S3_BUCKET_NAME
+    if (!bucketName || !photoUrl.includes(`${bucketName}.s3.amazonaws.com`)) {
       return {
         statusCode: 400,
         headers,
