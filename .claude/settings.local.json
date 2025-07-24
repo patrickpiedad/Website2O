@@ -14,7 +14,11 @@
       "Bash(node test-s3.js)",
       "Bash(npx tsx:*)",
       "Bash(curl:*)",
-      "Bash(timeout:*)"
+      "Bash(timeout:*)",
+      "Bash(pnpm dev:*)",
+      "Bash(pnpm list:*)",
+      "Bash(pnpm update:*)",
+      "WebFetch(domain:docs.astro.build)"
     ],
     "deny": []
   }

@@ -6,6 +6,8 @@ import PageLayout, {
 import { generateAuthors, getPosts } from '@/util/posts'
 import type { InferGetStaticPropsType } from 'astro'
 
+export const prerender = true
+
 export async function getStaticPaths() {
   const authors = await generateAuthors()
 

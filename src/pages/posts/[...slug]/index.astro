@@ -3,6 +3,8 @@ import PostLayout from '@/layouts/PostLayout.astro'
 import { getPosts } from '@/util/posts'
 import type { InferGetStaticPropsType } from 'astro'
 
+export const prerender = true
+
 const { post } = Astro.props
 
 type Props = InferGetStaticPropsType<typeof getStaticPaths>

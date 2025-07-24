@@ -9,6 +9,8 @@ import { getProjects } from '@/util/projects'
 import { generateTags } from '@/util/tags'
 import type { InferGetStaticPropsType } from 'astro'
 
+export const prerender = true
+
 const {
   tag: { tag, icon }
 } = Astro.props
