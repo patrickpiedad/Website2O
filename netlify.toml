@@ -1,0 +1,13 @@
+[build]
+  command = "pnpm build"
+  functions = "netlify/functions"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[dev]
+  command = "astro dev"
+  port = 8888
+  functions = "netlify/functions"
+  targetPort = 4321
