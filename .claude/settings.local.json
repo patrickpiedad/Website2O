@@ -25,7 +25,8 @@
       "Bash(echo:*)",
       "Bash(find:*)",
       "Bash(git reset:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": []
   }
