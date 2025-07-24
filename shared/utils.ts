@@ -206,8 +206,23 @@ export function getS3Config(): {
   const accessKeyId = process.env.AWS_ACCESS_KEY_ID
   const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY
 
+  // Log environment variables for debugging (without sensitive data)
+  console.log('Environment check:', {
+    NODE_ENV: process.env.NODE_ENV,
+    bucketName: bucketName ? 'SET' : 'MISSING',
+    region: region ? 'SET' : 'MISSING',
+    accessKeyId: accessKeyId ? 'SET' : 'MISSING',
+    secretAccessKey: secretAccessKey ? 'SET' : 'MISSING'
+  })
+
   if (!bucketName || !region || !accessKeyId || !secretAccessKey) {
-    throw new Error('Missing required AWS S3 environment variables')
+    const missing = []
+    if (!bucketName) missing.push('AWS_S3_BUCKET_NAME')
+    if (!region) missing.push('AWS_REGION')
+    if (!accessKeyId) missing.push('AWS_ACCESS_KEY_ID')
+    if (!secretAccessKey) missing.push('AWS_SECRET_ACCESS_KEY')
+    
+    throw new Error(`Missing required AWS S3 environment variables: ${missing.join(', ')}`)
   }
 
   return {

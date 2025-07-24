@@ -22,7 +22,10 @@
       "Bash(pnpm build:*)",
       "Bash(netlify dev:*)",
       "Bash(npx netlify dev:*)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(find:*)",
+      "Bash(git reset:*)",
+      "Bash(git add:*)"
     ],
     "deny": []
   }

@@ -68,7 +68,7 @@ class GalleryApp {
   }
 
   private async loadFolderInfo(): Promise<FolderInfo> {
-    const response = await fetch('/api/folder-info')
+    const response = await fetch('/.netlify/functions/folder-info')
     const result = await response.json()
 
     if (!result.success) {
@@ -79,7 +79,7 @@ class GalleryApp {
   }
 
   private async loadPhotos(): Promise<Photo[]> {
-    const response = await fetch('/api/recent-photos?limit=100')
+    const response = await fetch('/.netlify/functions/recent-photos?limit=100')
     const result = await response.json()
 
     if (!result.success) {
@@ -194,7 +194,7 @@ class GalleryApp {
         downloadUrl = getPhotoDisplayUrl(photo.url)
       } else {
         // S3 storage - use the direct URL or download API endpoint
-        downloadUrl = photo.url || `/api/download/${photo.id}`
+        downloadUrl = photo.url || `/.netlify/functions/download/${photo.id}`
       }
 
       const downloadName = createDownloadFilename(photo.label, photo.filename)

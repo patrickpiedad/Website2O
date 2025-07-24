@@ -1,7 +1,10 @@
-import type { Handler, HandlerEvent, HandlerContext } from '@netlify/functions'
+import type { Handler, HandlerContext, HandlerEvent } from '@netlify/functions'
 import { createApiResponse } from '../../shared/utils'
 
-export const handler: Handler = async (event: HandlerEvent, _context: HandlerContext) => {
+export const handler: Handler = async (
+  event: HandlerEvent,
+  _context: HandlerContext
+) => {
   // Enable CORS
   const headers = {
     'Access-Control-Allow-Origin': '*',

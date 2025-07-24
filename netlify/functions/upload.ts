@@ -1,15 +1,27 @@
-import type { Handler, HandlerEvent, HandlerContext } from '@netlify/functions'
+import type { Handler, HandlerContext, HandlerEvent } from '@netlify/functions'
 import { S3StorageManager } from '../../shared/s3-client'
+import type { UploadResponse } from '../../shared/types'
 import {
   createErrorResponse,
-  handleApiError,
   getS3Config,
+  handleApiError,
   parseMultipartForm,
   validateFileUpload
 } from '../../shared/utils'
-import type { UploadResponse } from '../../shared/types'
 
-export const handler: Handler = async (event: HandlerEvent, _context: HandlerContext) => {
+// Load environment variables only in development
+if (process.env.NODE_ENV === 'development') {
+  try {
+    require('dotenv').config()
+  } catch (e) {
+    // dotenv not available, skip
+  }
+}
+
+export const handler: Handler = async (
+  event: HandlerEvent,
+  _context: HandlerContext
+) => {
   // Enable CORS
   const headers = {
     'Access-Control-Allow-Origin': '*',
