@@ -8,6 +8,8 @@ import config from '@/theme.config'
 import { getSparks } from '@/util/sparks'
 import type { GetStaticPaths, InferGetStaticPropsType } from 'astro'
 
+export const prerender = true
+
 export const getStaticPaths = (async ({ paginate }) => {
   const sparks = await getSparks()
 

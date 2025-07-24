@@ -24,8 +24,6 @@ export default defineConfig({
     remarkPlugins: [readingTimePlugin]
   },
 
-  output: 'static',
-  adapter: netlify({
-    edgeMiddleware: true
-  })
+  output: 'server',
+  adapter: netlify()
 })
