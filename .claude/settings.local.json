@@ -26,7 +26,8 @@
       "Bash(find:*)",
       "Bash(git reset:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "WebFetch(domain:docs.netlify.com)"
     ],
     "deny": []
   }
