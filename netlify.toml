@@ -8,6 +8,6 @@
 
 [dev]
   command = "astro dev"
-  port = 8888
+  port = 8889
   functions = "netlify/functions"
   targetPort = 4321

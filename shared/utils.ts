@@ -51,9 +51,17 @@ export function handleApiError(error: any): {
   }
 
   if (error.message?.includes('S3') || error.message?.includes('AWS')) {
+    // Log the full error for debugging
+    console.error('S3/AWS Error Details:', {
+      message: error.message,
+      code: error.code,
+      statusCode: error.$metadata?.httpStatusCode,
+      stack: error.stack
+    })
+    
     return {
       statusCode: 500,
-      response: createErrorResponse('Storage service error')
+      response: createErrorResponse(`Storage service error: ${error.message}`)
     }
   }
 

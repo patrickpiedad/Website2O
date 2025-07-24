@@ -55,9 +55,8 @@ export class S3StorageManager {
           label: label || '',
           timestamp: timestamp,
           'upload-date': new Date().toISOString()
-        },
-        // Make file publicly readable
-        ACL: 'public-read' as const
+        }
+        // Note: Removed ACL parameter - bucket should be configured for public access
       }
 
       // Upload to S3
