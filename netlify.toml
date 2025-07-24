@@ -5,7 +5,7 @@
 
 [build.environment]
   NODE_VERSION = "20"
-  SECRETS_SCAN_OMIT_KEYS = "S3_REGION"
+  SECRETS_SCAN_OMIT_KEYS = "S3_REGION,S3_BUCKET_NAME"
 
 [dev]
   command = "astro dev"
