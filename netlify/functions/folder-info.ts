@@ -1,4 +1,5 @@
 import type { Handler, HandlerEvent, HandlerContext } from '@netlify/functions'
+import { config } from 'dotenv'
 import { S3StorageManager } from '../../shared/s3-client'
 import {
   createApiResponse,
@@ -6,6 +7,9 @@ import {
   handleApiError,
   getS3Config
 } from '../../shared/utils'
+
+// Load environment variables
+config()
 
 export const handler: Handler = async (event: HandlerEvent, _context: HandlerContext) => {
   // Enable CORS

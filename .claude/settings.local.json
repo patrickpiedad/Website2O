@@ -18,7 +18,11 @@
       "Bash(pnpm dev:*)",
       "Bash(pnpm list:*)",
       "Bash(pnpm update:*)",
-      "WebFetch(domain:docs.astro.build)"
+      "WebFetch(domain:docs.astro.build)",
+      "Bash(pnpm build:*)",
+      "Bash(netlify dev:*)",
+      "Bash(npx netlify dev:*)",
+      "Bash(echo:*)"
     ],
     "deny": []
   }
