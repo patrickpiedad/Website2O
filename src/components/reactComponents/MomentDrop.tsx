@@ -23,7 +23,7 @@ const MomentDrop: React.FC = () => {
   const [currentStream, setCurrentStream] = useState<MediaStream | null>(null)
   const [captureMode, setCaptureMode] = useState<'photo' | 'video'>('photo')
   const [isRecording, setIsRecording] = useState(false)
-  const [recordedVideo, setRecordedVideo] = useState<Blob | null>(null)
+  const [, setRecordedVideo] = useState<Blob | null>(null)
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null)
   const [currentBlobUrl, setCurrentBlobUrl] = useState<string | null>(null)
   const [uploadController, setUploadController] = useState<AbortController | null>(null)
@@ -304,7 +304,7 @@ const MomentDrop: React.FC = () => {
             // Append to existing photos (avoid duplicates)
             setPhotos(prev => {
               const existingIds = new Set(prev.map(p => p.id))
-              const uniqueNewPhotos = newPhotos.filter(p => !existingIds.has(p.id))
+              const uniqueNewPhotos = newPhotos.filter((p: any) => !existingIds.has(p.id))
               return [...prev, ...uniqueNewPhotos]
             })
           } else {
@@ -330,6 +330,7 @@ const MomentDrop: React.FC = () => {
     await loadGallery(currentPage + 1, true)
     setIsLoadingMore(false)
   }
+
 
   const toggleGallery = async () => {
     if (galleryVisible) {
@@ -1210,41 +1211,42 @@ const MomentDrop: React.FC = () => {
             <p style={{ marginBottom: '1rem' }}>
               Recent photos and videos from all guests!
             </p>
-            <button
-              onClick={toggleGallery}
-              style={{
-                padding: '14px 28px',
-                border: 'none',
-                borderRadius: '12px',
-                fontSize: '1.1rem',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                background: 'linear-gradient(135deg, #f8bbd9 0%, #e91e63 100%)',
-                color: '#ffffff',
-                boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)'
-              }}
-            >
-              {galleryVisible ? '📖 Hide Gallery' : '📖 View Gallery'}
-            </button>
-            {galleryVisible && photos.length > 0 && (
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '1rem' }}>
               <button
-                onClick={downloadAllPhotos}
+                onClick={toggleGallery}
                 style={{
                   padding: '14px 28px',
-                  border: '2px solid #e3f2fd',
+                  border: 'none',
                   borderRadius: '12px',
                   fontSize: '1.1rem',
                   fontWeight: 'bold',
                   cursor: 'pointer',
-                  background: '#ffffff',
-                  color: '#1976d2',
-                  boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
-                  marginTop: '1rem'
+                  background: 'linear-gradient(135deg, #f8bbd9 0%, #e91e63 100%)',
+                  color: '#ffffff',
+                  boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)'
                 }}
               >
-                📥 Download All Media
+                {galleryVisible ? '📖 Hide Gallery' : '📖 View Gallery'}
               </button>
-            )}
+              {galleryVisible && photos.length > 0 && (
+                <button
+                  onClick={downloadAllPhotos}
+                  style={{
+                    padding: '14px 28px',
+                    border: '2px solid #e3f2fd',
+                    borderRadius: '12px',
+                    fontSize: '1.1rem',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    background: '#ffffff',
+                    color: '#1976d2',
+                    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)'
+                  }}
+                >
+                  📥 Download All Media
+                </button>
+              )}
+            </div>
           </div>
 
           {galleryVisible && (
@@ -1338,7 +1340,8 @@ const MomentDrop: React.FC = () => {
                             style={{
                               fontWeight: 'bold',
                               color: '#2c3e50',
-                              marginBottom: '0.5rem'
+                              marginBottom: '0.5rem',
+                              fontSize: '1rem'
                             }}
                           >
                             {photo.label}
@@ -1348,7 +1351,8 @@ const MomentDrop: React.FC = () => {
                           style={{
                             fontSize: '0.8rem',
                             color: '#34495e',
-                            opacity: 0.7
+                            opacity: 0.7,
+                            marginBottom: '1rem'
                           }}
                         >
                           {formatTimestamp(photo.timestamp)}
@@ -1365,7 +1369,6 @@ const MomentDrop: React.FC = () => {
                             background: '#ffffff',
                             color: '#1976d2',
                             width: '100%',
-                            marginTop: '0.5rem',
                             transition: 'all 0.3s ease'
                           }}
                           onMouseEnter={(e) => {
@@ -1398,7 +1401,7 @@ const MomentDrop: React.FC = () => {
                           color: '#1976d2',
                           boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
                           opacity: isLoadingMore ? 0.6 : 1
-                        }}
+                        }}  
                       >
                         {isLoadingMore ? '⏳ Loading...' : '📥 Load More'}
                       </button>

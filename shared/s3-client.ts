@@ -31,18 +31,20 @@ export class S3StorageManager {
     timestamp: string
   ): Promise<string> {
     try {
-      // Generate filename with timestamp and label
-      const dateStr = new Date(timestamp).toISOString().split('T')[0]
-      const timeStr = new Date(timestamp)
-        .toISOString()
-        .split('T')[1]
-        .split('.')[0]
-        .replace(/:/g, '-')
+      // Generate filename with date first, then label
+      const date = new Date(timestamp)
+      const dateStr = date.toISOString().split('T')[0]
+      const timeStr = date.toISOString().split('T')[1].split('.')[0].replace(/:/g, '-')
       const fileExtension = file.originalname.split('.').pop() || 'jpg'
-      const baseFilename = `MomentDrop_${dateStr}_${timeStr}.${fileExtension}`
-      const filename = label
-        ? this.sanitizeFilename(label, baseFilename)
-        : baseFilename
+      
+      // Format: YYYY-MM-DD_HH-MM-SS_label.ext or YYYY-MM-DD_HH-MM-SS.ext
+      let filename: string
+      if (label && label.trim()) {
+        const sanitizedLabel = this.sanitizeLabel(label.trim())
+        filename = `${dateStr}_${timeStr}_${sanitizedLabel}.${fileExtension}`
+      } else {
+        filename = `${dateStr}_${timeStr}.${fileExtension}`
+      }
 
       // Create S3 upload parameters
       const uploadParams = {
@@ -120,6 +122,88 @@ export class S3StorageManager {
       throw new Error(
         `Failed to list files from S3: ${error instanceof Error ? error.message : 'Unknown error'}`
       )
+    }
+  }
+
+  /**
+   * List photos grouped by date
+   */
+  async listPhotosGroupedByDate(): Promise<{ [dateKey: string]: Photo[] }> {
+    try {
+      const listParams = {
+        Bucket: this.bucketName,
+        Prefix: 'photos/'
+      }
+
+      const command = new ListObjectsV2Command(listParams)
+      const result = await this.s3Client.send(command)
+
+      if (!result.Contents) {
+        return {}
+      }
+
+      // Sort by last modified (most recent first)
+      const sortedObjects = result.Contents.filter(
+        (obj) => obj.Key && obj.Size && obj.Size > 0
+      ).sort((a, b) => {
+        const dateA = a.LastModified ? new Date(a.LastModified).getTime() : 0
+        const dateB = b.LastModified ? new Date(b.LastModified).getTime() : 0
+        return dateB - dateA
+      })
+
+      // Convert to Photo objects and group by date
+      const photoGroups: { [dateKey: string]: Photo[] } = {}
+      
+      for (const obj of sortedObjects) {
+        try {
+          const photo = await this.convertS3ObjectToPhoto(obj)
+          const dateKey = this.getDateGroupKey(new Date(photo.timestamp))
+          
+          if (!photoGroups[dateKey]) {
+            photoGroups[dateKey] = []
+          }
+          photoGroups[dateKey].push(photo)
+        } catch (error) {
+          console.warn(
+            `Failed to convert S3 object to photo: ${obj.Key}`,
+            error
+          )
+        }
+      }
+
+      return photoGroups
+    } catch (error) {
+      console.error('Error listing S3 files:', error)
+      throw new Error(
+        `Failed to list files from S3: ${error instanceof Error ? error.message : 'Unknown error'}`
+      )
+    }
+  }
+
+  /**
+   * Get date group key for organizing photos
+   */
+  private getDateGroupKey(date: Date): string {
+    const now = new Date()
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const photoDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+    
+    const diffTime = today.getTime() - photoDate.getTime()
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+
+
+    if (diffDays === 0) {
+      return 'Today'
+    } else if (diffDays === 1) {
+      return 'Yesterday'
+    } else if (diffDays <= 7) {
+      return 'This Week'
+    } else if (diffDays <= 30) {
+      return 'This Month'
+    } else if (diffDays <= 365) {
+      return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+    } else {
+      return date.getFullYear().toString()
     }
   }
 
@@ -214,13 +298,22 @@ export class S3StorageManager {
       : new Date().toISOString()
 
     // Extract label from filename if present
-    const label = filename.includes('_')
-      ? filename
-          .split('_')
-          .slice(2)
-          .join('_')
-          .replace(/\.[^/.]+$/, '')
-      : ''
+    // New format: YYYY-MM-DD_HH-MM-SS_label.ext
+    // Old format: MomentDrop_YYYY-MM-DD_HH-MM-SS_label.ext
+    let label = ''
+    if (filename.includes('_')) {
+      const parts = filename.replace(/\.[^/.]+$/, '').split('_')
+      if (parts.length >= 3) {
+        // Check if it's new format (starts with date) or old format (starts with MomentDrop)
+        if (parts[0].match(/^\d{4}-\d{2}-\d{2}$/)) {
+          // New format: take everything after the second underscore
+          label = parts.slice(2).join('_')
+        } else if (parts[0] === 'MomentDrop' && parts.length >= 4) {
+          // Old format: take everything after the third underscore
+          label = parts.slice(3).join('_')
+        }
+      }
+    }
 
     return {
       id: key,
@@ -236,7 +329,18 @@ export class S3StorageManager {
   }
 
   /**
-   * Sanitize filename for S3
+   * Sanitize label for filename
+   */
+  private sanitizeLabel(label: string): string {
+    // Remove invalid characters and limit length
+    return label
+      .replace(/[^a-zA-Z0-9\s\-_]/g, '')
+      .replace(/\s+/g, '_')
+      .substring(0, 30)
+  }
+
+  /**
+   * Sanitize filename for S3 (legacy method, kept for compatibility)
    */
   private sanitizeFilename(label: string, baseFilename: string): string {
     // Remove invalid characters and limit length

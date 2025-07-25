@@ -156,16 +156,16 @@ export async function parseMultipartForm(
 
     busboy.on('file', (fieldname: string, file: NodeJS.ReadableStream, info: any) => {
       const { filename, mimeType } = info
-      const chunks: Buffer[] = []
+      const chunks: any[] = []
       let size = 0
 
-      file.on('data', (chunk: Buffer) => {
+      file.on('data', (chunk: any) => {
         chunks.push(chunk)
         size += chunk.length
         
         // Early size check to prevent memory exhaustion
         if (size > 10 * 1024 * 1024) {
-          file.destroy()
+          (file as any).destroy()
           reject(new Error('File too large during upload'))
         }
       })
