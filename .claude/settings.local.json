@@ -29,7 +29,9 @@
       "Bash(git commit:*)",
       "WebFetch(domain:docs.netlify.com)",
       "Bash(sed:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(netlify functions:serve:*)",
+      "Bash(git push:*)"
     ],
     "deny": []
   }
