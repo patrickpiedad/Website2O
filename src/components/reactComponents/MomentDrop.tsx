@@ -13,10 +13,21 @@ const MomentDrop: React.FC = () => {
   )
   const [photos, setPhotos] = useState<any[]>([])
   const [folderInfo, setFolderInfo] = useState<any>(null)
+  const [photosPerPage] = useState(20)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [hasMorePhotos, setHasMorePhotos] = useState(true)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [currentFacingMode, setCurrentFacingMode] = useState<
     'user' | 'environment'
   >('environment')
   const [currentStream, setCurrentStream] = useState<MediaStream | null>(null)
+  const [captureMode, setCaptureMode] = useState<'photo' | 'video'>('photo')
+  const [isRecording, setIsRecording] = useState(false)
+  const [, setRecordedVideo] = useState<Blob | null>(null)
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null)
+  const [currentBlobUrl, setCurrentBlobUrl] = useState<string | null>(null)
+  const [uploadController, setUploadController] = useState<AbortController | null>(null)
+  const [isCompressing, setIsCompressing] = useState(false)
 
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -107,14 +118,14 @@ const MomentDrop: React.FC = () => {
           const file = new File([blob], 'moment-drop-photo.jpg', {
             type: 'image/jpeg'
           })
-          const dataUrl = canvas.toDataURL('image/jpeg')
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.92)
           setCurrentPhoto({ file, dataUrl })
         } else {
           showMessage('Failed to capture photo', 'error')
         }
       },
       'image/jpeg',
-      0.8
+      0.92
     )
   }
 
@@ -129,9 +140,67 @@ const MomentDrop: React.FC = () => {
     }
   }
 
+  const startVideoRecording = () => {
+    if (!currentStream) {
+      showMessage('Camera not available for recording', 'error')
+      return
+    }
+
+    try {
+      const recorder = new MediaRecorder(currentStream)
+      const chunks: Blob[] = []
+
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          chunks.push(event.data)
+        }
+      }
+
+      recorder.onstop = () => {
+        const videoBlob = new Blob(chunks, { type: 'video/webm' })
+        setRecordedVideo(videoBlob)
+        
+        // Clean up previous blob URL
+        if (currentBlobUrl) {
+          URL.revokeObjectURL(currentBlobUrl)
+        }
+        
+        // Create blob URL for preview (memory efficient)
+        const blobUrl = URL.createObjectURL(videoBlob)
+        setCurrentBlobUrl(blobUrl)
+        
+        const file = new File([videoBlob], 'moment-drop-video.webm', {
+          type: 'video/webm'
+        })
+        
+        setCurrentPhoto({ file, dataUrl: blobUrl, isVideo: true })
+      }
+
+      recorder.start()
+      setMediaRecorder(recorder)
+      setIsRecording(true)
+      showMessage('Recording started...', 'success')
+    } catch (error) {
+      console.error('Failed to start recording:', error)
+      showMessage('Failed to start video recording', 'error')
+    }
+  }
+
+  const stopVideoRecording = () => {
+    if (mediaRecorder && isRecording) {
+      mediaRecorder.stop()
+      setIsRecording(false)
+      setMediaRecorder(null)
+      showMessage('Recording stopped', 'success')
+    }
+  }
+
   const uploadPhoto = async () => {
     if (!currentPhoto) return
 
+    // Create abort controller for cancellation
+    const controller = new AbortController()
+    setUploadController(controller)
     setIsUploading(true)
     setUploadProgress(0)
 
@@ -141,65 +210,111 @@ const MomentDrop: React.FC = () => {
       formData.append('label', photoLabelRef.current?.value || '')
       formData.append('timestamp', new Date().toISOString())
 
-      // Simulate progress for better UX
-      const progressInterval = setInterval(() => {
-        setUploadProgress((prev) => Math.min(prev + 10, 90))
-      }, 200)
+      // Show initial progress
+      setUploadProgress(5)
 
       const response = await fetch('/.netlify/functions/upload', {
         method: 'POST',
-        body: formData
+        body: formData,
+        signal: controller.signal
       })
 
-      clearInterval(progressInterval)
-      setUploadProgress(100)
+      // Progress simulation for upload completion
+      const progressInterval = setInterval(() => {
+        setUploadProgress((prev) => Math.min(prev + 15, 95))
+      }, 100)
 
       if (!response.ok) {
+        clearInterval(progressInterval)
         const errorText = await response.text()
         throw new Error(errorText || 'Upload failed')
       }
 
       const result = await response.json()
+      clearInterval(progressInterval)
+      setUploadProgress(100)
+      
       console.log('Upload result:', result)
 
-      showMessage('Photo uploaded successfully! 🎉', 'success')
+      showMessage(`${currentPhoto.isVideo ? 'Video' : 'Photo'} uploaded successfully! 🎉`, 'success')
       resetForm()
 
-      // Refresh gallery if visible
-      if (galleryVisible) {
-        loadGallery()
-      }
+      // Always refresh gallery after successful upload (with small delay for S3 consistency)
+      setTimeout(() => {
+        if (galleryVisible) {
+          loadGallery(1, false)
+        }
+      }, 1000)
     } catch (error) {
       console.error('Upload error:', error)
-      showMessage(
-        `Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        'error'
-      )
+      
+      if (error instanceof Error && error.name === 'AbortError') {
+        showMessage('Upload cancelled', 'error')
+      } else {
+        showMessage(
+          `Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          'error'
+        )
+      }
     } finally {
       setIsUploading(false)
       setUploadProgress(0)
+      setUploadController(null)
     }
   }
 
-  const loadGallery = async () => {
+  const cancelUpload = () => {
+    if (uploadController) {
+      uploadController.abort()
+    }
+  }
+
+  const loadGallery = async (page: number = 1, append: boolean = false) => {
     try {
-      // Load folder info
-      const folderResponse = await fetch('/.netlify/functions/folder-info')
-      if (folderResponse.ok) {
-        const folderResult = await folderResponse.json()
-        if (folderResult.success) {
-          setFolderInfo(folderResult.data)
+      if (page === 1) {
+        // Reset states for fresh load
+        setCurrentPage(1)
+        setHasMorePhotos(true)
+      }
+
+      if (page === 1) {
+        // Load folder info only on first page
+        const folderResponse = await fetch('/.netlify/functions/folder-info')
+        if (folderResponse.ok) {
+          const folderResult = await folderResponse.json()
+          if (folderResult.success) {
+            setFolderInfo(folderResult.data)
+          }
         }
       }
 
-      // Load recent photos
+      // Load photos with pagination
+      const limit = photosPerPage
+      const offset = (page - 1) * photosPerPage
       const photosResponse = await fetch(
-        '/.netlify/functions/recent-photos?limit=20'
+        `/.netlify/functions/recent-photos?limit=${limit}&offset=${offset}`
       )
+      
       if (photosResponse.ok) {
         const photosResult = await photosResponse.json()
         if (photosResult.success) {
-          setPhotos(photosResult.data || [])
+          const newPhotos = photosResult.data || []
+          
+          if (append && page > 1) {
+            // Append to existing photos (avoid duplicates)
+            setPhotos(prev => {
+              const existingIds = new Set(prev.map(p => p.id))
+              const uniqueNewPhotos = newPhotos.filter((p: any) => !existingIds.has(p.id))
+              return [...prev, ...uniqueNewPhotos]
+            })
+          } else {
+            // Replace photos (first load)
+            setPhotos(newPhotos)
+          }
+          
+          // Check if there are more photos
+          setHasMorePhotos(newPhotos.length === photosPerPage)
+          setCurrentPage(page)
         }
       }
     } catch (error) {
@@ -208,16 +323,31 @@ const MomentDrop: React.FC = () => {
     }
   }
 
+  const loadMorePhotos = async () => {
+    if (isLoadingMore || !hasMorePhotos) return
+    
+    setIsLoadingMore(true)
+    await loadGallery(currentPage + 1, true)
+    setIsLoadingMore(false)
+  }
+
+
   const toggleGallery = async () => {
     if (galleryVisible) {
       setGalleryVisible(false)
     } else {
       setGalleryVisible(true)
-      await loadGallery()
+      await loadGallery(1, false)
     }
   }
 
   const resetForm = () => {
+    // Clean up blob URL to prevent memory leaks
+    if (currentBlobUrl) {
+      URL.revokeObjectURL(currentBlobUrl)
+      setCurrentBlobUrl(null)
+    }
+    
     setCurrentPhoto(null)
     setCameraActive(false)
     setVideoReady(false)
@@ -230,6 +360,29 @@ const MomentDrop: React.FC = () => {
       stream.getTracks().forEach((track) => track.stop())
       videoRef.current.srcObject = null
     }
+  }
+
+  const getFileExtensionFromUrl = (url: string): string => {
+    try {
+      // Extract filename from URL
+      const urlParts = url.split('/')
+      const filename = urlParts[urlParts.length - 1]
+      const parts = filename.split('.')
+      if (parts.length > 1) {
+        const extension = parts[parts.length - 1].toLowerCase()
+        // Handle query parameters
+        return extension.split('?')[0]
+      }
+    } catch (error) {
+      console.warn('Failed to extract extension from URL:', url)
+    }
+    return 'jpg' // fallback
+  }
+
+  const isVideoFile = (url: string): boolean => {
+    const extension = getFileExtensionFromUrl(url)
+    const videoExtensions = ['mp4', 'mov', 'avi', 'wmv', 'webm', 'mkv', '3gp', 'm4v']
+    return videoExtensions.includes(extension)
   }
 
   const downloadPhoto = async (photo: any) => {
@@ -265,7 +418,8 @@ const MomentDrop: React.FC = () => {
       const label = photo.label
         ? photo.label.replace(/[^a-zA-Z0-9]/g, '-')
         : 'photo'
-      const filename = `${timestamp}-${label}.jpg`
+      const extension = getFileExtensionFromUrl(photo.url)
+      const filename = `${timestamp}-${label}.${extension}`
 
       link.download = filename
       document.body.appendChild(link)
@@ -369,7 +523,8 @@ const MomentDrop: React.FC = () => {
             const label = photo.label
               ? photo.label.replace(/[^a-zA-Z0-9]/g, '-')
               : 'photo'
-            const filename = `${i + 1}-${timestamp}-${label}.jpg`
+            const extension = getFileExtensionFromUrl(photo.url)
+            const filename = `${i + 1}-${timestamp}-${label}.${extension}`
 
             folder?.file(filename, blob)
           } catch (error) {
@@ -408,17 +563,122 @@ const MomentDrop: React.FC = () => {
     }
   }
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (file && file.type.startsWith('image/')) {
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        const dataUrl = e.target?.result as string
-        setCurrentPhoto({ file, dataUrl })
+  const compressImage = async (file: File): Promise<File> => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')
+      const img = new Image()
+      
+      img.onload = () => {
+        // More conservative compression - target around 2.5MB
+        // Use larger max dimensions and higher quality
+        const maxSize = 2400 // Increased from 1920
+        let { width, height } = img
+        
+        // Only resize if significantly oversized
+        if (width > maxSize || height > maxSize) {
+          if (width > height) {
+            height = (height * maxSize) / width
+            width = maxSize
+          } else {
+            width = (width * maxSize) / height
+            height = maxSize
+          }
+        }
+        
+        canvas.width = width
+        canvas.height = height
+        
+        // Draw and compress with higher quality
+        ctx?.drawImage(img, 0, 0, width, height)
+        
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              const compressedFile = new File([blob], file.name, {
+                type: 'image/jpeg',
+                lastModified: Date.now()
+              })
+              resolve(compressedFile)
+            } else {
+              resolve(file) // fallback to original
+            }
+          },
+          'image/jpeg',
+          0.92 // Increased quality from 0.8 to 0.92 for better file size
+        )
       }
-      reader.readAsDataURL(file)
-    } else {
-      showMessage('Please select a valid image file', 'error')
+      
+      img.onerror = () => resolve(file) // fallback to original
+      img.src = URL.createObjectURL(file)
+    })
+  }
+
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    try {
+      // Check file type
+      const isImage = file.type.startsWith('image/')
+      const isVideo = file.type.startsWith('video/')
+      
+      if (!isImage && !isVideo) {
+        showMessage('Please select a valid image or video file', 'error')
+        return
+      }
+
+      let processedFile = file
+      
+      // Handle large images with compression
+      if (isImage && file.size > 5 * 1024 * 1024) { // 5MB+ images
+        setIsCompressing(true)
+        showMessage('Compressing large image...', 'success')
+        
+        try {
+          processedFile = await compressImage(file)
+          const originalMB = (file.size / 1024 / 1024).toFixed(1)
+          const compressedMB = (processedFile.size / 1024 / 1024).toFixed(1)
+          showMessage(`Large image compressed: ${originalMB}MB → ${compressedMB}MB`, 'success')
+        } catch (error) {
+          console.error('Compression failed:', error)
+          showMessage('Compression failed, using original file', 'error')
+          processedFile = file // Ensure we use original file
+        } finally {
+          setIsCompressing(false)
+        }
+      }
+
+      // Final size validation
+      const maxImageSize = 10 * 1024 * 1024 // 10MB for images
+      const maxVideoSize = 100 * 1024 * 1024 // 100MB for videos
+      
+      if (isImage && processedFile.size > maxImageSize) {
+        showMessage(`Image still too large (${(processedFile.size / 1024 / 1024).toFixed(1)}MB). Maximum size is 10MB.`, 'error')
+        return
+      }
+      
+      if (isVideo && processedFile.size > maxVideoSize) {
+        showMessage(`Video file too large (${(processedFile.size / 1024 / 1024).toFixed(1)}MB). Maximum size is 100MB.`, 'error')
+        return
+      }
+
+      // Clean up previous blob URL
+      if (currentBlobUrl) {
+        URL.revokeObjectURL(currentBlobUrl)
+      }
+
+      // Use blob URL instead of data URL for memory efficiency
+      const blobUrl = URL.createObjectURL(processedFile)
+      setCurrentBlobUrl(blobUrl)
+      setCurrentPhoto({ file: processedFile, dataUrl: blobUrl, isVideo })
+      
+      const sizeMB = (processedFile.size / 1024 / 1024).toFixed(1)
+      showMessage(`${isVideo ? 'Video' : 'Image'} ready (${sizeMB}MB)`, 'success')
+    } catch (error) {
+      console.error('File selection error:', error)
+      showMessage('Failed to process file. Please try again.', 'error')
+      setIsCompressing(false)
     }
   }
 
@@ -561,6 +821,57 @@ const MomentDrop: React.FC = () => {
                 />
               </div>
 
+              {/* Mode Toggle */}
+              <div
+                style={{
+                  display: 'flex',
+                  background: '#f8f9fa',
+                  borderRadius: '12px',
+                  padding: '4px',
+                  marginBottom: '1rem',
+                  maxWidth: '300px',
+                  width: '100%',
+                  margin: '0 auto 1rem auto'
+                }}
+              >
+                <button
+                  onClick={() => setCaptureMode('photo')}
+                  style={{
+                    flex: 1,
+                    padding: '12px 24px',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '1rem',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    background: captureMode === 'photo' ? '#ffffff' : 'transparent',
+                    color: captureMode === 'photo' ? '#2c3e50' : '#7f8c8d',
+                    boxShadow: captureMode === 'photo' ? '0 2px 4px rgba(0, 0, 0, 0.1)' : 'none',
+                    transition: 'all 0.3s ease'
+                  }}
+                >
+                  📷 Photo
+                </button>
+                <button
+                  onClick={() => setCaptureMode('video')}
+                  style={{
+                    flex: 1,
+                    padding: '12px 24px',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '1rem',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    background: captureMode === 'video' ? '#ffffff' : 'transparent',
+                    color: captureMode === 'video' ? '#2c3e50' : '#7f8c8d',
+                    boxShadow: captureMode === 'video' ? '0 2px 4px rgba(0, 0, 0, 0.1)' : 'none',
+                    transition: 'all 0.3s ease'
+                  }}
+                >
+                  🎥 Video
+                </button>
+              </div>
+
               {/* Camera Controls */}
               <div
                 style={{
@@ -593,45 +904,94 @@ const MomentDrop: React.FC = () => {
                     </button>
                     <button
                       onClick={triggerFileSelect}
+                      disabled={isCompressing}
                       style={{
                         padding: '16px 32px',
                         border: '2px solid #e3f2fd',
                         borderRadius: '12px',
                         fontSize: '1.2rem',
                         fontWeight: 'bold',
-                        cursor: 'pointer',
+                        cursor: isCompressing ? 'not-allowed' : 'pointer',
                         background: '#ffffff',
                         color: '#1976d2',
                         boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
                         width: '100%',
                         maxWidth: '300px',
-                        marginTop: '0.5rem'
+                        marginTop: '0.5rem',
+                        opacity: isCompressing ? 0.6 : 1
                       }}
                     >
-                      📁 Choose from Device
+                      {isCompressing ? '⏳ Compressing...' : '📁 Choose from Device'}
                     </button>
                   </>
                 ) : (
                   <>
-                    <button
-                      onClick={capturePhoto}
-                      disabled={!videoReady}
-                      style={{
-                        padding: '18px 36px',
-                        border: '2px solid #f5e6d3',
-                        borderRadius: '12px',
-                        fontSize: '1.3rem',
-                        fontWeight: 'bold',
-                        cursor: videoReady ? 'pointer' : 'not-allowed',
-                        background: '#ffffff',
-                        color: '#34495e',
-                        width: '100%',
-                        maxWidth: '300px',
-                        opacity: videoReady ? 1 : 0.6
-                      }}
-                    >
-                      {videoReady ? '📸 Take Photo' : '⏳ Loading camera...'}
-                    </button>
+                    {captureMode === 'photo' ? (
+                      <button
+                        onClick={capturePhoto}
+                        disabled={!videoReady}
+                        style={{
+                          padding: '18px 36px',
+                          border: '2px solid #f5e6d3',
+                          borderRadius: '12px',
+                          fontSize: '1.3rem',
+                          fontWeight: 'bold',
+                          cursor: videoReady ? 'pointer' : 'not-allowed',
+                          background: '#ffffff',
+                          color: '#34495e',
+                          width: '100%',
+                          maxWidth: '300px',
+                          opacity: videoReady ? 1 : 0.6
+                        }}
+                      >
+                        {videoReady ? '📸 Take Photo' : '⏳ Loading camera...'}
+                      </button>
+                    ) : (
+                      <>
+                        {!isRecording ? (
+                          <button
+                            onClick={startVideoRecording}
+                            disabled={!videoReady}
+                            style={{
+                              padding: '18px 36px',
+                              border: 'none',
+                              borderRadius: '12px',
+                              fontSize: '1.3rem',
+                              fontWeight: 'bold',
+                              cursor: videoReady ? 'pointer' : 'not-allowed',
+                              background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%)',
+                              color: '#ffffff',
+                              width: '100%',
+                              maxWidth: '300px',
+                              opacity: videoReady ? 1 : 0.6,
+                              boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)'
+                            }}
+                          >
+                            {videoReady ? '🎥 Start Recording' : '⏳ Loading camera...'}
+                          </button>
+                        ) : (
+                          <button
+                            onClick={stopVideoRecording}
+                            style={{
+                              padding: '18px 36px',
+                              border: 'none',
+                              borderRadius: '12px',
+                              fontSize: '1.3rem',
+                              fontWeight: 'bold',
+                              cursor: 'pointer',
+                              background: 'linear-gradient(135deg, #ffa726 0%, #ff9800 100%)',
+                              color: '#ffffff',
+                              width: '100%',
+                              maxWidth: '300px',
+                              boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+                              animation: 'pulse 1s infinite'
+                            }}
+                          >
+                            🛑 Stop Recording
+                          </button>
+                        )}
+                      </>
+                    )}
                     {cameraActive && (
                       <button
                         onClick={flipCamera}
@@ -660,19 +1020,33 @@ const MomentDrop: React.FC = () => {
               </div>
             </div>
           ) : (
-            /* Photo Preview */
+            /* Media Preview */
             <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-              <img
-                src={currentPhoto.dataUrl}
-                alt="Captured photo preview"
-                style={{
-                  maxWidth: '100%',
-                  maxHeight: '400px',
-                  borderRadius: '12px',
-                  boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
-                  marginBottom: '1rem'
-                }}
-              />
+              {currentPhoto.isVideo ? (
+                <video
+                  src={currentPhoto.dataUrl}
+                  controls
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: '400px',
+                    borderRadius: '12px',
+                    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+                    marginBottom: '1rem'
+                  }}
+                />
+              ) : (
+                <img
+                  src={currentPhoto.dataUrl}
+                  alt="Captured photo preview"
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: '400px',
+                    borderRadius: '12px',
+                    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+                    marginBottom: '1rem'
+                  }}
+                />
+              )}
               <div
                 style={{
                   display: 'flex',
@@ -734,7 +1108,7 @@ const MomentDrop: React.FC = () => {
                       opacity: isUploading ? 0.6 : 1
                     }}
                   >
-                    📤 Upload Photo
+                    📤 Upload {currentPhoto.isVideo ? 'Video' : 'Photo'}
                   </button>
                 </div>
               </div>
@@ -764,9 +1138,33 @@ const MomentDrop: React.FC = () => {
                 />
               </div>
               <div
-                style={{ fontSize: '0.9rem', color: '#34495e', opacity: 0.8 }}
+                style={{ 
+                  fontSize: '0.9rem', 
+                  color: '#34495e', 
+                  opacity: 0.8,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '1rem'
+                }}
               >
-                Uploading... {uploadProgress}%
+                <span>Uploading... {uploadProgress}%</span>
+                {uploadController && (
+                  <button
+                    onClick={cancelUpload}
+                    style={{
+                      padding: '4px 8px',
+                      border: '1px solid #dc3545',
+                      borderRadius: '4px',
+                      fontSize: '0.8rem',
+                      cursor: 'pointer',
+                      background: '#ffffff',
+                      color: '#dc3545'
+                    }}
+                  >
+                    Cancel
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -808,46 +1206,47 @@ const MomentDrop: React.FC = () => {
                 marginBottom: '0.5rem'
               }}
             >
-              🖼️ Photo Gallery
+              📸 Media Gallery
             </h2>
             <p style={{ marginBottom: '1rem' }}>
-              Recent wedding photos from all guests!
+              Recent photos and videos from all guests!
             </p>
-            <button
-              onClick={toggleGallery}
-              style={{
-                padding: '14px 28px',
-                border: 'none',
-                borderRadius: '12px',
-                fontSize: '1.1rem',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                background: 'linear-gradient(135deg, #f8bbd9 0%, #e91e63 100%)',
-                color: '#ffffff',
-                boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)'
-              }}
-            >
-              {galleryVisible ? '📖 Hide Gallery' : '📖 View Gallery'}
-            </button>
-            {galleryVisible && photos.length > 0 && (
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '1rem' }}>
               <button
-                onClick={downloadAllPhotos}
+                onClick={toggleGallery}
                 style={{
                   padding: '14px 28px',
-                  border: '2px solid #e3f2fd',
+                  border: 'none',
                   borderRadius: '12px',
                   fontSize: '1.1rem',
                   fontWeight: 'bold',
                   cursor: 'pointer',
-                  background: '#ffffff',
-                  color: '#1976d2',
-                  boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
-                  marginTop: '1rem'
+                  background: 'linear-gradient(135deg, #f8bbd9 0%, #e91e63 100%)',
+                  color: '#ffffff',
+                  boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)'
                 }}
               >
-                📥 Download All Photos ({photos.length})
+                {galleryVisible ? '📖 Hide Gallery' : '📖 View Gallery'}
               </button>
-            )}
+              {galleryVisible && photos.length > 0 && (
+                <button
+                  onClick={downloadAllPhotos}
+                  style={{
+                    padding: '14px 28px',
+                    border: '2px solid #e3f2fd',
+                    borderRadius: '12px',
+                    fontSize: '1.1rem',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    background: '#ffffff',
+                    color: '#1976d2',
+                    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)'
+                  }}
+                >
+                  📥 Download All Media
+                </button>
+              )}
+            </div>
           </div>
 
           {galleryVisible && (
@@ -887,9 +1286,10 @@ const MomentDrop: React.FC = () => {
                     No photos yet. Be the first to share a moment! 📸
                   </p>
                 ) : (
-                  photos.map((photo, index) => (
+                  <>
+                    {photos.map((photo, index) => (
                     <div
-                      key={index}
+                      key={photo.id || photo.key || `photo-${index}`}
                       style={{
                         background: '#ffffff',
                         borderRadius: '12px',
@@ -898,30 +1298,50 @@ const MomentDrop: React.FC = () => {
                         transition: 'transform 0.3s ease'
                       }}
                     >
-                      <img
-                        src={photo.url}
-                        alt={photo.label || 'Wedding photo'}
-                        loading="lazy"
-                        crossOrigin="anonymous"
-                        style={{
-                          width: '100%',
-                          height: '200px',
-                          objectFit: 'cover',
-                          cursor: 'pointer'
-                        }}
-                        onContextMenu={(e) => {
-                          // Allow native context menu for mobile save functionality
-                          e.stopPropagation()
-                        }}
-                        title="Press and hold to save on mobile, or use download button"
-                      />
+                      {isVideoFile(photo.url) ? (
+                        <video
+                          src={photo.url}
+                          controls
+                          preload="metadata"
+                          style={{
+                            width: '100%',
+                            height: '200px',
+                            objectFit: 'cover',
+                            cursor: 'pointer'
+                          }}
+                          onContextMenu={(e) => {
+                            // Allow native context menu for mobile save functionality
+                            e.stopPropagation()
+                          }}
+                          title="Video - click to play, or use download button"
+                        />
+                      ) : (
+                        <img
+                          src={photo.url}
+                          alt={photo.label || 'Wedding photo'}
+                          loading="lazy"
+                          crossOrigin="anonymous"
+                          style={{
+                            width: '100%',
+                            height: '200px',
+                            objectFit: 'cover',
+                            cursor: 'pointer'
+                          }}
+                          onContextMenu={(e) => {
+                            // Allow native context menu for mobile save functionality
+                            e.stopPropagation()
+                          }}
+                          title="Press and hold to save on mobile, or use download button"
+                        />
+                      )}
                       <div style={{ padding: '1rem' }}>
                         {photo.label && (
                           <div
                             style={{
                               fontWeight: 'bold',
                               color: '#2c3e50',
-                              marginBottom: '0.5rem'
+                              marginBottom: '0.5rem',
+                              fontSize: '1rem'
                             }}
                           >
                             {photo.label}
@@ -931,7 +1351,8 @@ const MomentDrop: React.FC = () => {
                           style={{
                             fontSize: '0.8rem',
                             color: '#34495e',
-                            opacity: 0.7
+                            opacity: 0.7,
+                            marginBottom: '1rem'
                           }}
                         >
                           {formatTimestamp(photo.timestamp)}
@@ -948,7 +1369,6 @@ const MomentDrop: React.FC = () => {
                             background: '#ffffff',
                             color: '#1976d2',
                             width: '100%',
-                            marginTop: '0.5rem',
                             transition: 'all 0.3s ease'
                           }}
                           onMouseEnter={(e) => {
@@ -962,7 +1382,32 @@ const MomentDrop: React.FC = () => {
                         </button>
                       </div>
                     </div>
-                  ))
+                  ))}
+                  
+                  {/* Load More Button */}
+                  {hasMorePhotos && (
+                    <div style={{ gridColumn: '1 / -1', textAlign: 'center', marginTop: '2rem' }}>
+                      <button
+                        onClick={loadMorePhotos}
+                        disabled={isLoadingMore}
+                        style={{
+                          padding: '14px 28px',
+                          border: '2px solid #e3f2fd',
+                          borderRadius: '12px',
+                          fontSize: '1.1rem',
+                          fontWeight: 'bold',
+                          cursor: isLoadingMore ? 'not-allowed' : 'pointer',
+                          background: '#ffffff',
+                          color: '#1976d2',
+                          boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+                          opacity: isLoadingMore ? 0.6 : 1
+                        }}  
+                      >
+                        {isLoadingMore ? '⏳ Loading...' : '📥 Load More'}
+                      </button>
+                    </div>
+                  )}
+                </>
                 )}
               </div>
             </div>
@@ -988,7 +1433,7 @@ const MomentDrop: React.FC = () => {
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/*"
+        accept="image/*,video/*"
         onChange={handleFileSelect}
         style={{ display: 'none' }}
       />
