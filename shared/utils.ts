@@ -82,17 +82,26 @@ export function validateFileUpload(file: any): {
     return { isValid: false, error: 'No file provided' }
   }
 
-  const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp']
+  // Allow both image and video types
+  const allowedImageTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp', 'image/gif', 'image/bmp', 'image/heic', 'image/heif', 'image/tiff', 'image/avif']
+  const allowedVideoTypes = ['video/mp4', 'video/quicktime', 'video/webm', 'video/x-msvideo', 'video/x-ms-wmv', 'video/x-matroska', 'video/3gpp', 'video/x-m4v']
+  const allowedTypes = [...allowedImageTypes, ...allowedVideoTypes]
+  
   if (!allowedTypes.includes(file.type)) {
     return {
       isValid: false,
-      error: 'Invalid file type. Only JPEG, PNG, and WebP are allowed.'
+      error: 'Invalid file type. Only images (JPEG, PNG, WebP, GIF, HEIC, etc.) and videos (MP4, MOV, WebM, etc.) are allowed.'
     }
   }
 
-  const maxSize = 10 * 1024 * 1024 // 10MB
+  // Different size limits for images vs videos
+  const isVideo = file.type.startsWith('video/')
+  const maxSize = isVideo ? 100 * 1024 * 1024 : 10 * 1024 * 1024 // 100MB for videos, 10MB for images
+  const fileTypeLabel = isVideo ? 'video' : 'image'
+  const maxSizeLabel = isVideo ? '100MB' : '10MB'
+  
   if (file.size > maxSize) {
-    return { isValid: false, error: 'File too large. Maximum size is 10MB.' }
+    return { isValid: false, error: `${fileTypeLabel} file too large. Maximum size is ${maxSizeLabel}.` }
   }
 
   return { isValid: true }

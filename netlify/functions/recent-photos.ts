@@ -46,18 +46,24 @@ export const handler: Handler = async (
   }
 
   try {
-    // Get limit from query parameters
+    // Get limit and offset from query parameters
     const queryParams = event.queryStringParameters || {}
     const requestedLimit = parseInt(queryParams.limit || '20', 10)
+    const requestedOffset = parseInt(queryParams.offset || '0', 10)
+    
     // Allow higher limits for download all functionality, but cap at 1000 for safety
     const limit = Math.min(Math.max(requestedLimit, 1), 1000)
+    const offset = Math.max(requestedOffset, 0)
 
     // Initialize S3 manager
     const s3Config = getS3Config()
     const s3Manager = new S3StorageManager(s3Config)
 
-    // Get recent photos from S3
-    const photos = await s3Manager.listRecentFiles(limit)
+    // Get recent photos from S3 with offset
+    const allPhotos = await s3Manager.listRecentFiles(limit + offset)
+    
+    // Apply offset by slicing the array
+    const photos = allPhotos.slice(offset, offset + limit)
 
     return {
       statusCode: 200,

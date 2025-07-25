@@ -257,14 +257,29 @@ export class S3StorageManager {
   private getMimeTypeFromExtension(filename: string): string {
     const extension = filename.split('.').pop()?.toLowerCase()
     const mimeTypes: { [key: string]: string } = {
+      // Image formats
       jpg: 'image/jpeg',
       jpeg: 'image/jpeg',
       png: 'image/png',
       gif: 'image/gif',
       webp: 'image/webp',
       bmp: 'image/bmp',
-      svg: 'image/svg+xml'
+      svg: 'image/svg+xml',
+      heic: 'image/heic',
+      heif: 'image/heif',
+      tiff: 'image/tiff',
+      tif: 'image/tiff',
+      avif: 'image/avif',
+      // Video formats
+      mp4: 'video/mp4',
+      mov: 'video/quicktime',
+      avi: 'video/x-msvideo',
+      wmv: 'video/x-ms-wmv',
+      webm: 'video/webm',
+      mkv: 'video/x-matroska',
+      '3gp': 'video/3gpp',
+      m4v: 'video/x-m4v'
     }
-    return mimeTypes[extension || ''] || 'image/jpeg'
+    return mimeTypes[extension || ''] || 'application/octet-stream'
   }
 }

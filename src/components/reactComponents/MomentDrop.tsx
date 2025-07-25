@@ -13,10 +13,19 @@ const MomentDrop: React.FC = () => {
   )
   const [photos, setPhotos] = useState<any[]>([])
   const [folderInfo, setFolderInfo] = useState<any>(null)
+  const [visiblePhotos, setVisiblePhotos] = useState<any[]>([])
+  const [photosPerPage] = useState(20)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [hasMorePhotos, setHasMorePhotos] = useState(true)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [currentFacingMode, setCurrentFacingMode] = useState<
     'user' | 'environment'
   >('environment')
   const [currentStream, setCurrentStream] = useState<MediaStream | null>(null)
+  const [captureMode, setCaptureMode] = useState<'photo' | 'video'>('photo')
+  const [isRecording, setIsRecording] = useState(false)
+  const [recordedVideo, setRecordedVideo] = useState<Blob | null>(null)
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null)
 
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -107,14 +116,14 @@ const MomentDrop: React.FC = () => {
           const file = new File([blob], 'moment-drop-photo.jpg', {
             type: 'image/jpeg'
           })
-          const dataUrl = canvas.toDataURL('image/jpeg')
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.92)
           setCurrentPhoto({ file, dataUrl })
         } else {
           showMessage('Failed to capture photo', 'error')
         }
       },
       'image/jpeg',
-      0.8
+      0.92
     )
   }
 
@@ -126,6 +135,54 @@ const MomentDrop: React.FC = () => {
     } catch (error) {
       console.error('Failed to flip camera:', error)
       showMessage('Failed to switch camera', 'error')
+    }
+  }
+
+  const startVideoRecording = () => {
+    if (!currentStream) {
+      showMessage('Camera not available for recording', 'error')
+      return
+    }
+
+    try {
+      const recorder = new MediaRecorder(currentStream)
+      const chunks: Blob[] = []
+
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          chunks.push(event.data)
+        }
+      }
+
+      recorder.onstop = () => {
+        const videoBlob = new Blob(chunks, { type: 'video/webm' })
+        setRecordedVideo(videoBlob)
+        
+        // Create data URL for preview
+        const dataUrl = URL.createObjectURL(videoBlob)
+        const file = new File([videoBlob], 'moment-drop-video.webm', {
+          type: 'video/webm'
+        })
+        
+        setCurrentPhoto({ file, dataUrl, isVideo: true })
+      }
+
+      recorder.start()
+      setMediaRecorder(recorder)
+      setIsRecording(true)
+      showMessage('Recording started...', 'success')
+    } catch (error) {
+      console.error('Failed to start recording:', error)
+      showMessage('Failed to start video recording', 'error')
+    }
+  }
+
+  const stopVideoRecording = () => {
+    if (mediaRecorder && isRecording) {
+      mediaRecorder.stop()
+      setIsRecording(false)
+      setMediaRecorder(null)
+      showMessage('Recording stopped', 'success')
     }
   }
 
@@ -167,7 +224,7 @@ const MomentDrop: React.FC = () => {
 
       // Refresh gallery if visible
       if (galleryVisible) {
-        loadGallery()
+        loadGallery(1, false)
       }
     } catch (error) {
       console.error('Upload error:', error)
@@ -181,25 +238,51 @@ const MomentDrop: React.FC = () => {
     }
   }
 
-  const loadGallery = async () => {
+  const loadGallery = async (page: number = 1, append: boolean = false) => {
     try {
-      // Load folder info
-      const folderResponse = await fetch('/.netlify/functions/folder-info')
-      if (folderResponse.ok) {
-        const folderResult = await folderResponse.json()
-        if (folderResult.success) {
-          setFolderInfo(folderResult.data)
+      if (page === 1) {
+        // Reset states for fresh load
+        setCurrentPage(1)
+        setHasMorePhotos(true)
+        setVisiblePhotos([])
+      }
+
+      if (page === 1) {
+        // Load folder info only on first page
+        const folderResponse = await fetch('/.netlify/functions/folder-info')
+        if (folderResponse.ok) {
+          const folderResult = await folderResponse.json()
+          if (folderResult.success) {
+            setFolderInfo(folderResult.data)
+          }
         }
       }
 
-      // Load recent photos
+      // Load photos with pagination
+      const limit = photosPerPage
+      const offset = (page - 1) * photosPerPage
       const photosResponse = await fetch(
-        '/.netlify/functions/recent-photos?limit=20'
+        `/.netlify/functions/recent-photos?limit=${limit}&offset=${offset}`
       )
+      
       if (photosResponse.ok) {
         const photosResult = await photosResponse.json()
         if (photosResult.success) {
-          setPhotos(photosResult.data || [])
+          const newPhotos = photosResult.data || []
+          
+          if (append && page > 1) {
+            // Append to existing photos
+            setVisiblePhotos(prev => [...prev, ...newPhotos])
+            setPhotos(prev => [...prev, ...newPhotos])
+          } else {
+            // Replace photos (first load)
+            setVisiblePhotos(newPhotos)
+            setPhotos(newPhotos)
+          }
+          
+          // Check if there are more photos
+          setHasMorePhotos(newPhotos.length === photosPerPage)
+          setCurrentPage(page)
         }
       }
     } catch (error) {
@@ -208,12 +291,20 @@ const MomentDrop: React.FC = () => {
     }
   }
 
+  const loadMorePhotos = async () => {
+    if (isLoadingMore || !hasMorePhotos) return
+    
+    setIsLoadingMore(true)
+    await loadGallery(currentPage + 1, true)
+    setIsLoadingMore(false)
+  }
+
   const toggleGallery = async () => {
     if (galleryVisible) {
       setGalleryVisible(false)
     } else {
       setGalleryVisible(true)
-      await loadGallery()
+      await loadGallery(1, false)
     }
   }
 
@@ -230,6 +321,29 @@ const MomentDrop: React.FC = () => {
       stream.getTracks().forEach((track) => track.stop())
       videoRef.current.srcObject = null
     }
+  }
+
+  const getFileExtensionFromUrl = (url: string): string => {
+    try {
+      // Extract filename from URL
+      const urlParts = url.split('/')
+      const filename = urlParts[urlParts.length - 1]
+      const parts = filename.split('.')
+      if (parts.length > 1) {
+        const extension = parts[parts.length - 1].toLowerCase()
+        // Handle query parameters
+        return extension.split('?')[0]
+      }
+    } catch (error) {
+      console.warn('Failed to extract extension from URL:', url)
+    }
+    return 'jpg' // fallback
+  }
+
+  const isVideoFile = (url: string): boolean => {
+    const extension = getFileExtensionFromUrl(url)
+    const videoExtensions = ['mp4', 'mov', 'avi', 'wmv', 'webm', 'mkv', '3gp', 'm4v']
+    return videoExtensions.includes(extension)
   }
 
   const downloadPhoto = async (photo: any) => {
@@ -265,7 +379,8 @@ const MomentDrop: React.FC = () => {
       const label = photo.label
         ? photo.label.replace(/[^a-zA-Z0-9]/g, '-')
         : 'photo'
-      const filename = `${timestamp}-${label}.jpg`
+      const extension = getFileExtensionFromUrl(photo.url)
+      const filename = `${timestamp}-${label}.${extension}`
 
       link.download = filename
       document.body.appendChild(link)
@@ -369,7 +484,8 @@ const MomentDrop: React.FC = () => {
             const label = photo.label
               ? photo.label.replace(/[^a-zA-Z0-9]/g, '-')
               : 'photo'
-            const filename = `${i + 1}-${timestamp}-${label}.jpg`
+            const extension = getFileExtensionFromUrl(photo.url)
+            const filename = `${i + 1}-${timestamp}-${label}.${extension}`
 
             folder?.file(filename, blob)
           } catch (error) {
@@ -410,16 +526,37 @@ const MomentDrop: React.FC = () => {
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
-    if (file && file.type.startsWith('image/')) {
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        const dataUrl = e.target?.result as string
-        setCurrentPhoto({ file, dataUrl })
-      }
-      reader.readAsDataURL(file)
-    } else {
-      showMessage('Please select a valid image file', 'error')
+    if (!file) return
+
+    // Check file type
+    const isImage = file.type.startsWith('image/')
+    const isVideo = file.type.startsWith('video/')
+    
+    if (!isImage && !isVideo) {
+      showMessage('Please select a valid image or video file', 'error')
+      return
     }
+
+    // Check file size limits
+    const maxImageSize = 10 * 1024 * 1024 // 10MB for images
+    const maxVideoSize = 100 * 1024 * 1024 // 100MB for videos
+    
+    if (isImage && file.size > maxImageSize) {
+      showMessage('Image file too large. Maximum size is 10MB.', 'error')
+      return
+    }
+    
+    if (isVideo && file.size > maxVideoSize) {
+      showMessage('Video file too large. Maximum size is 100MB.', 'error')
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result as string
+      setCurrentPhoto({ file, dataUrl, isVideo })
+    }
+    reader.readAsDataURL(file)
   }
 
   const triggerFileSelect = () => {
@@ -561,6 +698,57 @@ const MomentDrop: React.FC = () => {
                 />
               </div>
 
+              {/* Mode Toggle */}
+              <div
+                style={{
+                  display: 'flex',
+                  background: '#f8f9fa',
+                  borderRadius: '12px',
+                  padding: '4px',
+                  marginBottom: '1rem',
+                  maxWidth: '300px',
+                  width: '100%',
+                  margin: '0 auto 1rem auto'
+                }}
+              >
+                <button
+                  onClick={() => setCaptureMode('photo')}
+                  style={{
+                    flex: 1,
+                    padding: '12px 24px',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '1rem',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    background: captureMode === 'photo' ? '#ffffff' : 'transparent',
+                    color: captureMode === 'photo' ? '#2c3e50' : '#7f8c8d',
+                    boxShadow: captureMode === 'photo' ? '0 2px 4px rgba(0, 0, 0, 0.1)' : 'none',
+                    transition: 'all 0.3s ease'
+                  }}
+                >
+                  📷 Photo
+                </button>
+                <button
+                  onClick={() => setCaptureMode('video')}
+                  style={{
+                    flex: 1,
+                    padding: '12px 24px',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '1rem',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    background: captureMode === 'video' ? '#ffffff' : 'transparent',
+                    color: captureMode === 'video' ? '#2c3e50' : '#7f8c8d',
+                    boxShadow: captureMode === 'video' ? '0 2px 4px rgba(0, 0, 0, 0.1)' : 'none',
+                    transition: 'all 0.3s ease'
+                  }}
+                >
+                  🎥 Video
+                </button>
+              </div>
+
               {/* Camera Controls */}
               <div
                 style={{
@@ -613,25 +801,72 @@ const MomentDrop: React.FC = () => {
                   </>
                 ) : (
                   <>
-                    <button
-                      onClick={capturePhoto}
-                      disabled={!videoReady}
-                      style={{
-                        padding: '18px 36px',
-                        border: '2px solid #f5e6d3',
-                        borderRadius: '12px',
-                        fontSize: '1.3rem',
-                        fontWeight: 'bold',
-                        cursor: videoReady ? 'pointer' : 'not-allowed',
-                        background: '#ffffff',
-                        color: '#34495e',
-                        width: '100%',
-                        maxWidth: '300px',
-                        opacity: videoReady ? 1 : 0.6
-                      }}
-                    >
-                      {videoReady ? '📸 Take Photo' : '⏳ Loading camera...'}
-                    </button>
+                    {captureMode === 'photo' ? (
+                      <button
+                        onClick={capturePhoto}
+                        disabled={!videoReady}
+                        style={{
+                          padding: '18px 36px',
+                          border: '2px solid #f5e6d3',
+                          borderRadius: '12px',
+                          fontSize: '1.3rem',
+                          fontWeight: 'bold',
+                          cursor: videoReady ? 'pointer' : 'not-allowed',
+                          background: '#ffffff',
+                          color: '#34495e',
+                          width: '100%',
+                          maxWidth: '300px',
+                          opacity: videoReady ? 1 : 0.6
+                        }}
+                      >
+                        {videoReady ? '📸 Take Photo' : '⏳ Loading camera...'}
+                      </button>
+                    ) : (
+                      <>
+                        {!isRecording ? (
+                          <button
+                            onClick={startVideoRecording}
+                            disabled={!videoReady}
+                            style={{
+                              padding: '18px 36px',
+                              border: 'none',
+                              borderRadius: '12px',
+                              fontSize: '1.3rem',
+                              fontWeight: 'bold',
+                              cursor: videoReady ? 'pointer' : 'not-allowed',
+                              background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%)',
+                              color: '#ffffff',
+                              width: '100%',
+                              maxWidth: '300px',
+                              opacity: videoReady ? 1 : 0.6,
+                              boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)'
+                            }}
+                          >
+                            {videoReady ? '🎥 Start Recording' : '⏳ Loading camera...'}
+                          </button>
+                        ) : (
+                          <button
+                            onClick={stopVideoRecording}
+                            style={{
+                              padding: '18px 36px',
+                              border: 'none',
+                              borderRadius: '12px',
+                              fontSize: '1.3rem',
+                              fontWeight: 'bold',
+                              cursor: 'pointer',
+                              background: 'linear-gradient(135deg, #ffa726 0%, #ff9800 100%)',
+                              color: '#ffffff',
+                              width: '100%',
+                              maxWidth: '300px',
+                              boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+                              animation: 'pulse 1s infinite'
+                            }}
+                          >
+                            🛑 Stop Recording
+                          </button>
+                        )}
+                      </>
+                    )}
                     {cameraActive && (
                       <button
                         onClick={flipCamera}
@@ -660,19 +895,33 @@ const MomentDrop: React.FC = () => {
               </div>
             </div>
           ) : (
-            /* Photo Preview */
+            /* Media Preview */
             <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-              <img
-                src={currentPhoto.dataUrl}
-                alt="Captured photo preview"
-                style={{
-                  maxWidth: '100%',
-                  maxHeight: '400px',
-                  borderRadius: '12px',
-                  boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
-                  marginBottom: '1rem'
-                }}
-              />
+              {currentPhoto.isVideo ? (
+                <video
+                  src={currentPhoto.dataUrl}
+                  controls
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: '400px',
+                    borderRadius: '12px',
+                    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+                    marginBottom: '1rem'
+                  }}
+                />
+              ) : (
+                <img
+                  src={currentPhoto.dataUrl}
+                  alt="Captured photo preview"
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: '400px',
+                    borderRadius: '12px',
+                    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+                    marginBottom: '1rem'
+                  }}
+                />
+              )}
               <div
                 style={{
                   display: 'flex',
@@ -808,10 +1057,10 @@ const MomentDrop: React.FC = () => {
                 marginBottom: '0.5rem'
               }}
             >
-              🖼️ Photo Gallery
+              📸 Media Gallery
             </h2>
             <p style={{ marginBottom: '1rem' }}>
-              Recent wedding photos from all guests!
+              Recent photos and videos from all guests!
             </p>
             <button
               onClick={toggleGallery}
@@ -845,7 +1094,7 @@ const MomentDrop: React.FC = () => {
                   marginTop: '1rem'
                 }}
               >
-                📥 Download All Photos ({photos.length})
+                📥 Download All Media ({photos.length})
               </button>
             )}
           </div>
@@ -887,7 +1136,8 @@ const MomentDrop: React.FC = () => {
                     No photos yet. Be the first to share a moment! 📸
                   </p>
                 ) : (
-                  photos.map((photo, index) => (
+                  <>
+                    {visiblePhotos.map((photo, index) => (
                     <div
                       key={index}
                       style={{
@@ -898,23 +1148,42 @@ const MomentDrop: React.FC = () => {
                         transition: 'transform 0.3s ease'
                       }}
                     >
-                      <img
-                        src={photo.url}
-                        alt={photo.label || 'Wedding photo'}
-                        loading="lazy"
-                        crossOrigin="anonymous"
-                        style={{
-                          width: '100%',
-                          height: '200px',
-                          objectFit: 'cover',
-                          cursor: 'pointer'
-                        }}
-                        onContextMenu={(e) => {
-                          // Allow native context menu for mobile save functionality
-                          e.stopPropagation()
-                        }}
-                        title="Press and hold to save on mobile, or use download button"
-                      />
+                      {isVideoFile(photo.url) ? (
+                        <video
+                          src={photo.url}
+                          controls
+                          preload="metadata"
+                          style={{
+                            width: '100%',
+                            height: '200px',
+                            objectFit: 'cover',
+                            cursor: 'pointer'
+                          }}
+                          onContextMenu={(e) => {
+                            // Allow native context menu for mobile save functionality
+                            e.stopPropagation()
+                          }}
+                          title="Video - click to play, or use download button"
+                        />
+                      ) : (
+                        <img
+                          src={photo.url}
+                          alt={photo.label || 'Wedding photo'}
+                          loading="lazy"
+                          crossOrigin="anonymous"
+                          style={{
+                            width: '100%',
+                            height: '200px',
+                            objectFit: 'cover',
+                            cursor: 'pointer'
+                          }}
+                          onContextMenu={(e) => {
+                            // Allow native context menu for mobile save functionality
+                            e.stopPropagation()
+                          }}
+                          title="Press and hold to save on mobile, or use download button"
+                        />
+                      )}
                       <div style={{ padding: '1rem' }}>
                         {photo.label && (
                           <div
@@ -962,7 +1231,32 @@ const MomentDrop: React.FC = () => {
                         </button>
                       </div>
                     </div>
-                  ))
+                  ))}
+                  
+                  {/* Load More Button */}
+                  {hasMorePhotos && (
+                    <div style={{ gridColumn: '1 / -1', textAlign: 'center', marginTop: '2rem' }}>
+                      <button
+                        onClick={loadMorePhotos}
+                        disabled={isLoadingMore}
+                        style={{
+                          padding: '14px 28px',
+                          border: '2px solid #e3f2fd',
+                          borderRadius: '12px',
+                          fontSize: '1.1rem',
+                          fontWeight: 'bold',
+                          cursor: isLoadingMore ? 'not-allowed' : 'pointer',
+                          background: '#ffffff',
+                          color: '#1976d2',
+                          boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+                          opacity: isLoadingMore ? 0.6 : 1
+                        }}
+                      >
+                        {isLoadingMore ? '⏳ Loading...' : '📥 Load More'}
+                      </button>
+                    </div>
+                  )}
+                </>
                 )}
               </div>
             </div>
@@ -988,7 +1282,7 @@ const MomentDrop: React.FC = () => {
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/*"
+        accept="image/*,video/*"
         onChange={handleFileSelect}
         style={{ display: 'none' }}
       />
