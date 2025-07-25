@@ -26,6 +26,8 @@ const MomentDrop: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false)
   const [recordedVideo, setRecordedVideo] = useState<Blob | null>(null)
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null)
+  const [currentBlobUrl, setCurrentBlobUrl] = useState<string | null>(null)
+  const [uploadController, setUploadController] = useState<AbortController | null>(null)
 
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -158,13 +160,20 @@ const MomentDrop: React.FC = () => {
         const videoBlob = new Blob(chunks, { type: 'video/webm' })
         setRecordedVideo(videoBlob)
         
-        // Create data URL for preview
-        const dataUrl = URL.createObjectURL(videoBlob)
+        // Clean up previous blob URL
+        if (currentBlobUrl) {
+          URL.revokeObjectURL(currentBlobUrl)
+        }
+        
+        // Create blob URL for preview (memory efficient)
+        const blobUrl = URL.createObjectURL(videoBlob)
+        setCurrentBlobUrl(blobUrl)
+        
         const file = new File([videoBlob], 'moment-drop-video.webm', {
           type: 'video/webm'
         })
         
-        setCurrentPhoto({ file, dataUrl, isVideo: true })
+        setCurrentPhoto({ file, dataUrl: blobUrl, isVideo: true })
       }
 
       recorder.start()
@@ -189,6 +198,9 @@ const MomentDrop: React.FC = () => {
   const uploadPhoto = async () => {
     if (!currentPhoto) return
 
+    // Create abort controller for cancellation
+    const controller = new AbortController()
+    setUploadController(controller)
     setIsUploading(true)
     setUploadProgress(0)
 
@@ -198,28 +210,33 @@ const MomentDrop: React.FC = () => {
       formData.append('label', photoLabelRef.current?.value || '')
       formData.append('timestamp', new Date().toISOString())
 
-      // Simulate progress for better UX
-      const progressInterval = setInterval(() => {
-        setUploadProgress((prev) => Math.min(prev + 10, 90))
-      }, 200)
+      // Show initial progress
+      setUploadProgress(5)
 
       const response = await fetch('/.netlify/functions/upload', {
         method: 'POST',
-        body: formData
+        body: formData,
+        signal: controller.signal
       })
 
-      clearInterval(progressInterval)
-      setUploadProgress(100)
+      // Progress simulation for upload completion
+      const progressInterval = setInterval(() => {
+        setUploadProgress((prev) => Math.min(prev + 15, 95))
+      }, 100)
 
       if (!response.ok) {
+        clearInterval(progressInterval)
         const errorText = await response.text()
         throw new Error(errorText || 'Upload failed')
       }
 
       const result = await response.json()
+      clearInterval(progressInterval)
+      setUploadProgress(100)
+      
       console.log('Upload result:', result)
 
-      showMessage('Photo uploaded successfully! 🎉', 'success')
+      showMessage(`${currentPhoto.isVideo ? 'Video' : 'Photo'} uploaded successfully! 🎉`, 'success')
       resetForm()
 
       // Refresh gallery if visible
@@ -228,13 +245,25 @@ const MomentDrop: React.FC = () => {
       }
     } catch (error) {
       console.error('Upload error:', error)
-      showMessage(
-        `Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        'error'
-      )
+      
+      if (error instanceof Error && error.name === 'AbortError') {
+        showMessage('Upload cancelled', 'error')
+      } else {
+        showMessage(
+          `Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          'error'
+        )
+      }
     } finally {
       setIsUploading(false)
       setUploadProgress(0)
+      setUploadController(null)
+    }
+  }
+
+  const cancelUpload = () => {
+    if (uploadController) {
+      uploadController.abort()
     }
   }
 
@@ -309,6 +338,12 @@ const MomentDrop: React.FC = () => {
   }
 
   const resetForm = () => {
+    // Clean up blob URL to prevent memory leaks
+    if (currentBlobUrl) {
+      URL.revokeObjectURL(currentBlobUrl)
+      setCurrentBlobUrl(null)
+    }
+    
     setCurrentPhoto(null)
     setCameraActive(false)
     setVideoReady(false)
@@ -528,35 +563,45 @@ const MomentDrop: React.FC = () => {
     const file = event.target.files?.[0]
     if (!file) return
 
-    // Check file type
-    const isImage = file.type.startsWith('image/')
-    const isVideo = file.type.startsWith('video/')
-    
-    if (!isImage && !isVideo) {
-      showMessage('Please select a valid image or video file', 'error')
-      return
-    }
+    try {
+      // Check file type
+      const isImage = file.type.startsWith('image/')
+      const isVideo = file.type.startsWith('video/')
+      
+      if (!isImage && !isVideo) {
+        showMessage('Please select a valid image or video file', 'error')
+        return
+      }
 
-    // Check file size limits
-    const maxImageSize = 10 * 1024 * 1024 // 10MB for images
-    const maxVideoSize = 100 * 1024 * 1024 // 100MB for videos
-    
-    if (isImage && file.size > maxImageSize) {
-      showMessage('Image file too large. Maximum size is 10MB.', 'error')
-      return
-    }
-    
-    if (isVideo && file.size > maxVideoSize) {
-      showMessage('Video file too large. Maximum size is 100MB.', 'error')
-      return
-    }
+      // Check file size limits with early validation
+      const maxImageSize = 10 * 1024 * 1024 // 10MB for images
+      const maxVideoSize = 100 * 1024 * 1024 // 100MB for videos
+      
+      if (isImage && file.size > maxImageSize) {
+        showMessage(`Image file too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum size is 10MB.`, 'error')
+        return
+      }
+      
+      if (isVideo && file.size > maxVideoSize) {
+        showMessage(`Video file too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum size is 100MB.`, 'error')
+        return
+      }
 
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      const dataUrl = e.target?.result as string
-      setCurrentPhoto({ file, dataUrl, isVideo })
+      // Clean up previous blob URL
+      if (currentBlobUrl) {
+        URL.revokeObjectURL(currentBlobUrl)
+      }
+
+      // Use blob URL instead of data URL for memory efficiency
+      const blobUrl = URL.createObjectURL(file)
+      setCurrentBlobUrl(blobUrl)
+      setCurrentPhoto({ file, dataUrl: blobUrl, isVideo })
+      
+      showMessage(`${isVideo ? 'Video' : 'Image'} selected (${(file.size / 1024 / 1024).toFixed(1)}MB)`, 'success')
+    } catch (error) {
+      console.error('File selection error:', error)
+      showMessage('Failed to process file. Please try again.', 'error')
     }
-    reader.readAsDataURL(file)
   }
 
   const triggerFileSelect = () => {
@@ -983,7 +1028,7 @@ const MomentDrop: React.FC = () => {
                       opacity: isUploading ? 0.6 : 1
                     }}
                   >
-                    📤 Upload Photo
+                    📤 Upload {currentPhoto.isVideo ? 'Video' : 'Photo'}
                   </button>
                 </div>
               </div>
@@ -1013,9 +1058,33 @@ const MomentDrop: React.FC = () => {
                 />
               </div>
               <div
-                style={{ fontSize: '0.9rem', color: '#34495e', opacity: 0.8 }}
+                style={{ 
+                  fontSize: '0.9rem', 
+                  color: '#34495e', 
+                  opacity: 0.8,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '1rem'
+                }}
               >
-                Uploading... {uploadProgress}%
+                <span>Uploading... {uploadProgress}%</span>
+                {uploadController && (
+                  <button
+                    onClick={cancelUpload}
+                    style={{
+                      padding: '4px 8px',
+                      border: '1px solid #dc3545',
+                      borderRadius: '4px',
+                      fontSize: '0.8rem',
+                      cursor: 'pointer',
+                      background: '#ffffff',
+                      color: '#dc3545'
+                    }}
+                  >
+                    Cancel
+                  </button>
+                )}
               </div>
             </div>
           )}

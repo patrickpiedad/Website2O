@@ -1,4 +1,6 @@
 import type { ApiResponse } from './types'
+import Busboy from 'busboy'
+import { Readable } from 'stream'
 
 /**
  * Create standardized API response
@@ -108,8 +110,8 @@ export function validateFileUpload(file: any): {
 }
 
 /**
- * Parse multipart form data (for Netlify Functions)
- * This is a robust parser for handling file uploads in serverless functions
+ * Parse multipart form data using streaming parser (for Netlify Functions)
+ * This is more memory efficient for large file uploads
  */
 export async function parseMultipartForm(
   event: any
@@ -121,84 +123,92 @@ export async function parseMultipartForm(
     throw new Error('Content-Type must be multipart/form-data')
   }
 
-  // Get the body as a buffer
+  // Check body size early to prevent memory issues
+  const bodySize = event.body ? Buffer.byteLength(event.body, event.isBase64Encoded ? 'base64' : 'utf8') : 0
+  const maxBodySize = 10 * 1024 * 1024 // 10MB limit
+  
+  if (bodySize > maxBodySize) {
+    throw new Error(`Request body too large: ${(bodySize / 1024 / 1024).toFixed(1)}MB. Maximum allowed: 10MB`)
+  }
+
+  // Convert body to buffer
   const body = event.isBase64Encoded
     ? Buffer.from(event.body, 'base64')
     : Buffer.from(event.body)
 
-  // Extract boundary
-  const boundaryMatch = contentType.match(/boundary=(.+)$/)
-  if (!boundaryMatch) {
-    throw new Error('No boundary found in Content-Type')
-  }
+  return new Promise((resolve, reject) => {
+    const fields: any = {}
+    const files: any[] = []
+    
+    // Create a readable stream from the buffer
+    const stream = new Readable()
+    stream.push(body)
+    stream.push(null)
 
-  const boundary = '--' + boundaryMatch[1]
-  const textDecoder = new TextDecoder()
+    const busboy = Busboy({ 
+      headers: { 'content-type': contentType },
+      limits: {
+        fileSize: 10 * 1024 * 1024, // 10MB per file
+        files: 1, // Only allow 1 file at a time
+        fields: 10 // Limit number of fields
+      }
+    })
 
-  // Split body by boundary
-  const parts = []
-  let start = 0
+    busboy.on('file', (fieldname: string, file: NodeJS.ReadableStream, info: any) => {
+      const { filename, mimeType } = info
+      const chunks: Buffer[] = []
+      let size = 0
 
-  while (true) {
-    const boundaryIndex = body.indexOf(boundary, start)
-    if (boundaryIndex === -1) break
-
-    if (start !== 0) {
-      parts.push(body.slice(start, boundaryIndex))
-    }
-
-    start = boundaryIndex + boundary.length
-
-    // Skip CRLF after boundary
-    if (body[start] === 0x0d && body[start + 1] === 0x0a) {
-      start += 2
-    }
-  }
-
-  const fields: any = {}
-  const files: any[] = []
-
-  for (const part of parts) {
-    if (part.length === 0) continue
-
-    // Find the end of headers (double CRLF)
-    const headerEndIndex = part.indexOf('\r\n\r\n')
-    if (headerEndIndex === -1) continue
-
-    const headerBuffer = part.slice(0, headerEndIndex)
-    const contentBuffer = part.slice(headerEndIndex + 4)
-
-    const headers = textDecoder.decode(headerBuffer)
-    const dispositionMatch = headers.match(
-      /Content-Disposition: form-data; name="([^"]+)"(?:; filename="([^"]+)")?/
-    )
-
-    if (!dispositionMatch) continue
-
-    const fieldName = dispositionMatch[1]
-    const fileName = dispositionMatch[2]
-
-    if (fileName) {
-      // This is a file
-      const contentTypeMatch = headers.match(/Content-Type: ([^\r\n]+)/)
-      const mimeType = contentTypeMatch
-        ? contentTypeMatch[1]
-        : 'application/octet-stream'
-
-      files.push({
-        fieldname: fieldName,
-        originalname: fileName,
-        mimetype: mimeType,
-        buffer: contentBuffer,
-        size: contentBuffer.length
+      file.on('data', (chunk: Buffer) => {
+        chunks.push(chunk)
+        size += chunk.length
+        
+        // Early size check to prevent memory exhaustion
+        if (size > 10 * 1024 * 1024) {
+          file.destroy()
+          reject(new Error('File too large during upload'))
+        }
       })
-    } else {
-      // This is a regular field
-      fields[fieldName] = textDecoder.decode(contentBuffer).trim()
-    }
-  }
 
-  return { fields, files }
+      file.on('end', () => {
+        files.push({
+          fieldname,
+          originalname: filename,
+          mimetype: mimeType,
+          buffer: Buffer.concat(chunks),
+          size
+        })
+      })
+
+      file.on('error', (error: Error) => {
+        reject(error)
+      })
+    })
+
+    busboy.on('field', (fieldname: string, value: string) => {
+      fields[fieldname] = value
+    })
+
+    busboy.on('finish', () => {
+      resolve({ fields, files })
+    })
+
+    busboy.on('error', (error: Error) => {
+      reject(error)
+    })
+
+    // Handle limits exceeded
+    busboy.on('filesLimit', () => {
+      reject(new Error('Too many files'))
+    })
+    
+    busboy.on('fieldsLimit', () => {
+      reject(new Error('Too many fields'))
+    })
+
+    // Pipe the stream to busboy
+    stream.pipe(busboy)
+  })
 }
 
 /**
