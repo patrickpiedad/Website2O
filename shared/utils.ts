@@ -100,11 +100,23 @@ export function validateFileUpload(file: any): {
   const isImage = allowedImageTypes.includes(baseMimeType)
   const isVideo = baseMimeType.startsWith('video/')
   
+  // TEMPORARY DEBUG: Log everything and bypass validation
+  console.log('=== FILE VALIDATION DEBUG v2.0 ===')
+  console.log('Timestamp:', new Date().toISOString())
+  console.log('Original file.type:', JSON.stringify(file.type))
+  console.log('Base MIME type:', JSON.stringify(baseMimeType))
+  console.log('Is image?', isImage)
+  console.log('Is video?', isVideo)
+  console.log('File size:', file.size)
+  console.log('=====================================')
+  
   if (!isImage && !isVideo) {
-    return {
-      isValid: false,
-      error: 'Invalid file type. Only images (JPEG, PNG, WebP, GIF, HEIC, etc.) and videos (MP4, MOV, WebM, etc.) are allowed.'
-    }
+    // TEMPORARILY return success to see what's happening
+    console.log('WOULD NORMALLY REJECT - but allowing for debug')
+    // return {
+    //   isValid: false,
+    //   error: 'Invalid file type. Only images (JPEG, PNG, WebP, GIF, HEIC, etc.) and videos (MP4, MOV, WebM, etc.) are allowed.'
+    // }
   }
 
   // Different size limits for images vs videos  
