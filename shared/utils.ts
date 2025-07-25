@@ -84,30 +84,30 @@ export function validateFileUpload(file: any): {
     return { isValid: false, error: 'No file provided' }
   }
 
-  // Allow both image and video types
-  const allowedImageTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp', 'image/gif', 'image/bmp', 'image/heic', 'image/heif', 'image/tiff', 'image/avif']
-  const allowedVideoTypes = ['video/mp4', 'video/quicktime', 'video/webm', 'video/x-msvideo', 'video/x-ms-wmv', 'video/x-matroska', 'video/3gpp', 'video/x-m4v', 'video/ogg']
-  const allowedTypes = [...allowedImageTypes, ...allowedVideoTypes]
-  
   // Extract base MIME type (remove codec parameters)
-  const baseMimeType = file.type.split(';')[0].toLowerCase()
+  const baseMimeType = file.type.split(';')[0].toLowerCase().trim()
   
   // Debug logging
   console.log('File validation debug:', {
     originalType: file.type,
-    baseMimeType,
-    allowedTypes: allowedTypes.slice(0, 5) + '...' // Only show first few for brevity
+    baseMimeType
   })
   
-  if (!allowedTypes.includes(baseMimeType)) {
+  // Allow image types
+  const allowedImageTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp', 'image/gif', 'image/bmp', 'image/heic', 'image/heif', 'image/tiff', 'image/avif']
+  
+  // For videos, be more permissive - allow any video/* base type from common browsers
+  const isImage = allowedImageTypes.includes(baseMimeType)
+  const isVideo = baseMimeType.startsWith('video/')
+  
+  if (!isImage && !isVideo) {
     return {
       isValid: false,
       error: 'Invalid file type. Only images (JPEG, PNG, WebP, GIF, HEIC, etc.) and videos (MP4, MOV, WebM, etc.) are allowed.'
     }
   }
 
-  // Different size limits for images vs videos
-  const isVideo = baseMimeType.startsWith('video/')
+  // Different size limits for images vs videos  
   const maxSize = isVideo ? 100 * 1024 * 1024 : 10 * 1024 * 1024 // 100MB for videos, 10MB for images
   const fileTypeLabel = isVideo ? 'video' : 'image'
   const maxSizeLabel = isVideo ? '100MB' : '10MB'

@@ -200,6 +200,7 @@ const MomentDrop: React.FC = () => {
         })
         
         console.log('Video file created:', { name: file.name, type: file.type, size: file.size })
+        console.log('Video blob details:', { blobType: videoBlob.type, mimeType })
         setCurrentPhoto({ file, dataUrl: blobUrl, isVideo: true })
         
         // Reset recorder state
