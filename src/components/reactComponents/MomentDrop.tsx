@@ -569,10 +569,12 @@ const MomentDrop: React.FC = () => {
       const img = new Image()
       
       img.onload = () => {
-        // Calculate new dimensions (max 1920x1920)
-        const maxSize = 1920
+        // More conservative compression - target around 2.5MB
+        // Use larger max dimensions and higher quality
+        const maxSize = 2400 // Increased from 1920
         let { width, height } = img
         
+        // Only resize if significantly oversized
         if (width > maxSize || height > maxSize) {
           if (width > height) {
             height = (height * maxSize) / width
@@ -586,7 +588,7 @@ const MomentDrop: React.FC = () => {
         canvas.width = width
         canvas.height = height
         
-        // Draw and compress
+        // Draw and compress with higher quality
         ctx?.drawImage(img, 0, 0, width, height)
         
         canvas.toBlob(
@@ -602,7 +604,7 @@ const MomentDrop: React.FC = () => {
             }
           },
           'image/jpeg',
-          0.8 // 80% quality
+          0.92 // Increased quality from 0.8 to 0.92 for better file size
         )
       }
       
