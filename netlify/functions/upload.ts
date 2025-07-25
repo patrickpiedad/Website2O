@@ -63,6 +63,14 @@ export const handler: Handler = async (
     const label = fields.label || ''
     const timestamp = fields.timestamp || new Date().toISOString()
 
+    // Log file details before validation
+    console.log('Upload function - file details:', {
+      filename: file.originalname,
+      mimetype: file.mimetype, 
+      size: file.size,
+      label
+    })
+
     // Validate file
     const validation = validateFileUpload({
       type: file.mimetype,

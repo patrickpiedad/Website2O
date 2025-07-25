@@ -47,7 +47,8 @@ const MomentDrop: React.FC = () => {
       }
 
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: facingMode } }
+        video: { facingMode: { ideal: facingMode } },
+        audio: true
       })
       setCurrentStream(stream)
       setCurrentFacingMode(facingMode)
@@ -146,8 +147,30 @@ const MomentDrop: React.FC = () => {
       return
     }
 
+    // Prevent multiple simultaneous recordings
+    if (isRecording || mediaRecorder) {
+      console.log('Recording already in progress, ignoring start request')
+      return
+    }
+
     try {
-      const recorder = new MediaRecorder(currentStream)
+      // Try different codecs for mobile compatibility
+      let mimeType = 'video/webm;codecs=vp8,opus'
+      if (!MediaRecorder.isTypeSupported(mimeType)) {
+        mimeType = 'video/webm;codecs=vp9,opus'
+        if (!MediaRecorder.isTypeSupported(mimeType)) {
+          mimeType = 'video/webm'
+          if (!MediaRecorder.isTypeSupported(mimeType)) {
+            mimeType = 'video/mp4'
+          }
+        }
+      }
+      
+      console.log('Starting recording with mimeType:', mimeType)
+      
+      const recorder = new MediaRecorder(currentStream, {
+        mimeType
+      })
       const chunks: Blob[] = []
 
       recorder.ondataavailable = (event) => {
@@ -157,7 +180,8 @@ const MomentDrop: React.FC = () => {
       }
 
       recorder.onstop = () => {
-        const videoBlob = new Blob(chunks, { type: 'video/webm' })
+        console.log('Recording stopped, processing video...')
+        const videoBlob = new Blob(chunks, { type: mimeType })
         setRecordedVideo(videoBlob)
         
         // Clean up previous blob URL
@@ -169,29 +193,56 @@ const MomentDrop: React.FC = () => {
         const blobUrl = URL.createObjectURL(videoBlob)
         setCurrentBlobUrl(blobUrl)
         
-        const file = new File([videoBlob], 'moment-drop-video.webm', {
-          type: 'video/webm'
+        // Generate appropriate file extension based on mime type
+        const extension = mimeType.includes('mp4') ? 'mp4' : 'webm'
+        const file = new File([videoBlob], `moment-drop-video.${extension}`, {
+          type: mimeType
         })
         
+        console.log('Video file created:', { name: file.name, type: file.type, size: file.size })
+        console.log('Video blob details:', { blobType: videoBlob.type, mimeType })
         setCurrentPhoto({ file, dataUrl: blobUrl, isVideo: true })
+        
+        // Reset recorder state
+        setMediaRecorder(null)
+        setIsRecording(false)
       }
 
-      recorder.start()
+      recorder.onstart = () => {
+        console.log('MediaRecorder started')
+        setIsRecording(true)
+        showMessage('Recording started...', 'success')
+      }
+
+      recorder.onerror = (event) => {
+        console.error('MediaRecorder error:', event)
+        setIsRecording(false)
+        setMediaRecorder(null)
+        showMessage('Recording error occurred', 'error')
+      }
+
       setMediaRecorder(recorder)
-      setIsRecording(true)
-      showMessage('Recording started...', 'success')
+      recorder.start()
     } catch (error) {
       console.error('Failed to start recording:', error)
+      setIsRecording(false)
+      setMediaRecorder(null)
       showMessage('Failed to start video recording', 'error')
     }
   }
 
   const stopVideoRecording = () => {
-    if (mediaRecorder && isRecording) {
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+      console.log('Stopping recording...')
       mediaRecorder.stop()
-      setIsRecording(false)
-      setMediaRecorder(null)
-      showMessage('Recording stopped', 'success')
+      showMessage('Processing video...', 'success')
+      // Note: state cleanup happens in recorder.onstop
+    } else {
+      console.log('No active recording to stop', { 
+        hasRecorder: !!mediaRecorder, 
+        state: mediaRecorder?.state,
+        isRecording 
+      })
     }
   }
 
@@ -381,7 +432,7 @@ const MomentDrop: React.FC = () => {
 
   const isVideoFile = (url: string): boolean => {
     const extension = getFileExtensionFromUrl(url)
-    const videoExtensions = ['mp4', 'mov', 'avi', 'wmv', 'webm', 'mkv', '3gp', 'm4v']
+    const videoExtensions = ['mp4', 'mov', 'avi', 'wmv', 'webm', 'mkv', '3gp', 'm4v', 'ogg', 'ogv']
     return videoExtensions.includes(extension)
   }
 
@@ -1026,6 +1077,8 @@ const MomentDrop: React.FC = () => {
                 <video
                   src={currentPhoto.dataUrl}
                   controls
+                  playsInline
+                  preload="metadata"
                   style={{
                     maxWidth: '100%',
                     maxHeight: '400px',
@@ -1299,22 +1352,39 @@ const MomentDrop: React.FC = () => {
                       }}
                     >
                       {isVideoFile(photo.url) ? (
-                        <video
-                          src={photo.url}
-                          controls
-                          preload="metadata"
+                        <div
                           style={{
+                            position: 'relative',
                             width: '100%',
                             height: '200px',
-                            objectFit: 'cover',
-                            cursor: 'pointer'
+                            backgroundColor: '#f0f0f0',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer',
+                            borderRadius: '8px 8px 0 0'
                           }}
-                          onContextMenu={(e) => {
-                            // Allow native context menu for mobile save functionality
+                          onClick={(e) => {
                             e.stopPropagation()
+                            const videoContainer = e.currentTarget
+                            const video = document.createElement('video')
+                            video.src = photo.url
+                            video.controls = true
+                            video.autoplay = true
+                            video.playsInline = true
+                            video.style.width = '100%'
+                            video.style.height = '200px'
+                            video.style.objectFit = 'cover'
+                            video.oncontextmenu = (e) => e.stopPropagation()
+                            videoContainer.innerHTML = ''
+                            videoContainer.appendChild(video)
                           }}
-                          title="Video - click to play, or use download button"
-                        />
+                        >
+                          <div style={{ textAlign: 'center', color: '#666' }}>
+                            <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>▶️</div>
+                            <div style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>Click to play video</div>
+                          </div>
+                        </div>
                       ) : (
                         <img
                           src={photo.url}
