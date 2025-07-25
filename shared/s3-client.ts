@@ -80,8 +80,8 @@ export class S3StorageManager {
     try {
       const listParams = {
         Bucket: this.bucketName,
-        Prefix: 'photos/',
-        MaxKeys: limit
+        Prefix: 'photos/'
+        // Removed MaxKeys to allow fetching more items for pagination
       }
 
       const command = new ListObjectsV2Command(listParams)

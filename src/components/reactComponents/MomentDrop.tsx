@@ -13,7 +13,6 @@ const MomentDrop: React.FC = () => {
   )
   const [photos, setPhotos] = useState<any[]>([])
   const [folderInfo, setFolderInfo] = useState<any>(null)
-  const [visiblePhotos, setVisiblePhotos] = useState<any[]>([])
   const [photosPerPage] = useState(20)
   const [currentPage, setCurrentPage] = useState(1)
   const [hasMorePhotos, setHasMorePhotos] = useState(true)
@@ -28,6 +27,7 @@ const MomentDrop: React.FC = () => {
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null)
   const [currentBlobUrl, setCurrentBlobUrl] = useState<string | null>(null)
   const [uploadController, setUploadController] = useState<AbortController | null>(null)
+  const [isCompressing, setIsCompressing] = useState(false)
 
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -239,10 +239,12 @@ const MomentDrop: React.FC = () => {
       showMessage(`${currentPhoto.isVideo ? 'Video' : 'Photo'} uploaded successfully! 🎉`, 'success')
       resetForm()
 
-      // Refresh gallery if visible
-      if (galleryVisible) {
-        loadGallery(1, false)
-      }
+      // Always refresh gallery after successful upload (with small delay for S3 consistency)
+      setTimeout(() => {
+        if (galleryVisible) {
+          loadGallery(1, false)
+        }
+      }, 1000)
     } catch (error) {
       console.error('Upload error:', error)
       
@@ -273,7 +275,6 @@ const MomentDrop: React.FC = () => {
         // Reset states for fresh load
         setCurrentPage(1)
         setHasMorePhotos(true)
-        setVisiblePhotos([])
       }
 
       if (page === 1) {
@@ -300,12 +301,14 @@ const MomentDrop: React.FC = () => {
           const newPhotos = photosResult.data || []
           
           if (append && page > 1) {
-            // Append to existing photos
-            setVisiblePhotos(prev => [...prev, ...newPhotos])
-            setPhotos(prev => [...prev, ...newPhotos])
+            // Append to existing photos (avoid duplicates)
+            setPhotos(prev => {
+              const existingIds = new Set(prev.map(p => p.id))
+              const uniqueNewPhotos = newPhotos.filter(p => !existingIds.has(p.id))
+              return [...prev, ...uniqueNewPhotos]
+            })
           } else {
             // Replace photos (first load)
-            setVisiblePhotos(newPhotos)
             setPhotos(newPhotos)
           }
           
@@ -559,7 +562,56 @@ const MomentDrop: React.FC = () => {
     }
   }
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const compressImage = async (file: File): Promise<File> => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')
+      const img = new Image()
+      
+      img.onload = () => {
+        // Calculate new dimensions (max 1920x1920)
+        const maxSize = 1920
+        let { width, height } = img
+        
+        if (width > maxSize || height > maxSize) {
+          if (width > height) {
+            height = (height * maxSize) / width
+            width = maxSize
+          } else {
+            width = (width * maxSize) / height
+            height = maxSize
+          }
+        }
+        
+        canvas.width = width
+        canvas.height = height
+        
+        // Draw and compress
+        ctx?.drawImage(img, 0, 0, width, height)
+        
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              const compressedFile = new File([blob], file.name, {
+                type: 'image/jpeg',
+                lastModified: Date.now()
+              })
+              resolve(compressedFile)
+            } else {
+              resolve(file) // fallback to original
+            }
+          },
+          'image/jpeg',
+          0.8 // 80% quality
+        )
+      }
+      
+      img.onerror = () => resolve(file) // fallback to original
+      img.src = URL.createObjectURL(file)
+    })
+  }
+
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
 
@@ -573,17 +625,38 @@ const MomentDrop: React.FC = () => {
         return
       }
 
-      // Check file size limits with early validation
+      let processedFile = file
+      
+      // Handle large images with compression
+      if (isImage && file.size > 5 * 1024 * 1024) { // 5MB+ images
+        setIsCompressing(true)
+        showMessage('Compressing large image...', 'success')
+        
+        try {
+          processedFile = await compressImage(file)
+          const originalMB = (file.size / 1024 / 1024).toFixed(1)
+          const compressedMB = (processedFile.size / 1024 / 1024).toFixed(1)
+          showMessage(`Large image compressed: ${originalMB}MB → ${compressedMB}MB`, 'success')
+        } catch (error) {
+          console.error('Compression failed:', error)
+          showMessage('Compression failed, using original file', 'error')
+          processedFile = file // Ensure we use original file
+        } finally {
+          setIsCompressing(false)
+        }
+      }
+
+      // Final size validation
       const maxImageSize = 10 * 1024 * 1024 // 10MB for images
       const maxVideoSize = 100 * 1024 * 1024 // 100MB for videos
       
-      if (isImage && file.size > maxImageSize) {
-        showMessage(`Image file too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum size is 10MB.`, 'error')
+      if (isImage && processedFile.size > maxImageSize) {
+        showMessage(`Image still too large (${(processedFile.size / 1024 / 1024).toFixed(1)}MB). Maximum size is 10MB.`, 'error')
         return
       }
       
-      if (isVideo && file.size > maxVideoSize) {
-        showMessage(`Video file too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum size is 100MB.`, 'error')
+      if (isVideo && processedFile.size > maxVideoSize) {
+        showMessage(`Video file too large (${(processedFile.size / 1024 / 1024).toFixed(1)}MB). Maximum size is 100MB.`, 'error')
         return
       }
 
@@ -593,14 +666,16 @@ const MomentDrop: React.FC = () => {
       }
 
       // Use blob URL instead of data URL for memory efficiency
-      const blobUrl = URL.createObjectURL(file)
+      const blobUrl = URL.createObjectURL(processedFile)
       setCurrentBlobUrl(blobUrl)
-      setCurrentPhoto({ file, dataUrl: blobUrl, isVideo })
+      setCurrentPhoto({ file: processedFile, dataUrl: blobUrl, isVideo })
       
-      showMessage(`${isVideo ? 'Video' : 'Image'} selected (${(file.size / 1024 / 1024).toFixed(1)}MB)`, 'success')
+      const sizeMB = (processedFile.size / 1024 / 1024).toFixed(1)
+      showMessage(`${isVideo ? 'Video' : 'Image'} ready (${sizeMB}MB)`, 'success')
     } catch (error) {
       console.error('File selection error:', error)
       showMessage('Failed to process file. Please try again.', 'error')
+      setIsCompressing(false)
     }
   }
 
@@ -826,22 +901,24 @@ const MomentDrop: React.FC = () => {
                     </button>
                     <button
                       onClick={triggerFileSelect}
+                      disabled={isCompressing}
                       style={{
                         padding: '16px 32px',
                         border: '2px solid #e3f2fd',
                         borderRadius: '12px',
                         fontSize: '1.2rem',
                         fontWeight: 'bold',
-                        cursor: 'pointer',
+                        cursor: isCompressing ? 'not-allowed' : 'pointer',
                         background: '#ffffff',
                         color: '#1976d2',
                         boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
                         width: '100%',
                         maxWidth: '300px',
-                        marginTop: '0.5rem'
+                        marginTop: '0.5rem',
+                        opacity: isCompressing ? 0.6 : 1
                       }}
                     >
-                      📁 Choose from Device
+                      {isCompressing ? '⏳ Compressing...' : '📁 Choose from Device'}
                     </button>
                   </>
                 ) : (
@@ -1163,7 +1240,7 @@ const MomentDrop: React.FC = () => {
                   marginTop: '1rem'
                 }}
               >
-                📥 Download All Media ({photos.length})
+                📥 Download All Media
               </button>
             )}
           </div>
@@ -1206,9 +1283,9 @@ const MomentDrop: React.FC = () => {
                   </p>
                 ) : (
                   <>
-                    {visiblePhotos.map((photo, index) => (
+                    {photos.map((photo, index) => (
                     <div
-                      key={index}
+                      key={photo.id || photo.key || `photo-${index}`}
                       style={{
                         background: '#ffffff',
                         borderRadius: '12px',
