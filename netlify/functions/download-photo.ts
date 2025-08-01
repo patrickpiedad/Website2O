@@ -40,7 +40,7 @@ export const handler: Handler = async (
       }
     }
 
-    // Validate that it's from our S3 bucket
+    // Validate that it's from our storage service
     const bucketName = process.env.S3_BUCKET_NAME || process.env.AWS_S3_BUCKET_NAME
     if (!bucketName || !photoUrl.includes(`${bucketName}.s3.amazonaws.com`)) {
       return {
@@ -53,7 +53,7 @@ export const handler: Handler = async (
     // Fetch the photo from S3
     const response = await fetch(photoUrl)
     if (!response.ok) {
-      throw new Error(`Failed to fetch photo: ${response.status}`)
+      throw new Error('Failed to fetch photo from storage')
     }
 
     // Get the image data
@@ -78,8 +78,7 @@ export const handler: Handler = async (
       statusCode: 500,
       headers,
       body: JSON.stringify({ 
-        error: 'Failed to download photo',
-        message: error instanceof Error ? error.message : 'Unknown error'
+        error: 'Failed to download photo'
       })
     }
   }

@@ -302,10 +302,7 @@ const MomentDrop: React.FC = () => {
       if (error instanceof Error && error.name === 'AbortError') {
         showMessage('Upload cancelled', 'error')
       } else {
-        showMessage(
-          `Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-          'error'
-        )
+        showMessage('Upload failed. Please try again.', 'error')
       }
     } finally {
       setIsUploading(false)
