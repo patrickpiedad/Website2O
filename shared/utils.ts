@@ -52,9 +52,9 @@ export function handleApiError(error: any): {
     }
   }
 
-  if (error.message?.includes('S3') || error.message?.includes('AWS')) {
+  if (error.message?.includes('S3') || error.message?.includes('AWS') || error.message?.includes('bucket') || error.message?.includes('storage')) {
     // Log the full error for debugging
-    console.error('S3/AWS Error Details:', {
+    console.error('Storage Error Details:', {
       message: error.message,
       code: error.code,
       statusCode: error.$metadata?.httpStatusCode,
@@ -63,7 +63,7 @@ export function handleApiError(error: any): {
     
     return {
       statusCode: 500,
-      response: createErrorResponse(`Storage service error: ${error.message}`)
+      response: createErrorResponse('Storage service is currently unavailable')
     }
   }
 
@@ -271,7 +271,7 @@ export function getS3Config(): {
     if (!accessKeyId) missing.push('S3_ACCESS_KEY_ID')
     if (!secretAccessKey) missing.push('S3_SECRET_ACCESS_KEY')
     
-    throw new Error(`Missing required S3 environment variables: ${missing.join(', ')}`)
+    throw new Error('Storage configuration is incomplete. Please check your environment settings.')
   }
 
   return {

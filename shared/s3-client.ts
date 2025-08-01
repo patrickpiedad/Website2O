@@ -68,10 +68,8 @@ export class S3StorageManager {
       // Return the S3 key as file ID
       return `photos/${filename}`
     } catch (error) {
-      console.error('S3 upload error:', error)
-      throw new Error(
-        `Failed to upload file to S3: ${error instanceof Error ? error.message : 'Unknown error'}`
-      )
+      console.error('Storage upload error:', error)
+      throw new Error('Failed to upload file to storage')
     }
   }
 
@@ -118,10 +116,8 @@ export class S3StorageManager {
 
       return photos
     } catch (error) {
-      console.error('Error listing S3 files:', error)
-      throw new Error(
-        `Failed to list files from S3: ${error instanceof Error ? error.message : 'Unknown error'}`
-      )
+      console.error('Error listing files:', error)
+      throw new Error('Failed to list files from storage')
     }
   }
 
@@ -173,10 +169,8 @@ export class S3StorageManager {
 
       return photoGroups
     } catch (error) {
-      console.error('Error listing S3 files:', error)
-      throw new Error(
-        `Failed to list files from S3: ${error instanceof Error ? error.message : 'Unknown error'}`
-      )
+      console.error('Error listing files:', error)
+      throw new Error('Failed to list files from storage')
     }
   }
 
@@ -224,15 +218,13 @@ export class S3StorageManager {
 
       return {
         name: 'MomentDrop Wedding Photos',
-        id: this.bucketName,
+        id: 'storage-bucket',
         photoCount: photoCount,
-        webViewLink: `https://${this.bucketName}.s3.amazonaws.com/`
+        webViewLink: '#'
       }
     } catch (error) {
       console.error('Error getting folder info:', error)
-      throw new Error(
-        `Failed to get folder info: ${error instanceof Error ? error.message : 'Unknown error'}`
-      )
+      throw new Error('Failed to get folder information')
     }
   }
 
@@ -256,9 +248,7 @@ export class S3StorageManager {
       return await getSignedUrl(this.s3Client, command, { expiresIn: 3600 }) // 1 hour
     } catch (error) {
       console.error('Error generating download URL:', error)
-      throw new Error(
-        `Failed to generate download URL: ${error instanceof Error ? error.message : 'Unknown error'}`
-      )
+      throw new Error('Failed to generate download URL')
     }
   }
 
@@ -277,12 +267,12 @@ export class S3StorageManager {
 
       return {
         success: true,
-        message: `Successfully connected to S3 bucket: ${this.bucketName}`
+        message: 'Successfully connected to storage'
       }
     } catch (error) {
       return {
         success: false,
-        message: `S3 connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        message: 'Storage connection failed'
       }
     }
   }
