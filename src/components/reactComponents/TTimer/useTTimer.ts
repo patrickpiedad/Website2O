@@ -187,7 +187,7 @@ export const useTTimer = () => {
       intervalRef.current = setInterval(() => {
         const now = Date.now()
 
-        setTime((prevTime) => {
+        setTime(() => {
           // Calculate actual elapsed time based on timestamps
           const elapsed = now - startTimeRef.current
           const newTime = initialTimeRef.current - elapsed
@@ -215,7 +215,7 @@ export const useTTimer = () => {
           }
           return newTime
         })
-      }, TIMER_CONSTANTS.UPDATE_INTERVAL)
+      }, TIMER_CONSTANTS.UPDATE_INTERVAL) as NodeJS.Timeout
     } else {
       if (intervalRef.current) {
         clearInterval(intervalRef.current as NodeJS.Timeout)

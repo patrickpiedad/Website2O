@@ -273,7 +273,7 @@ export default function Timer() {
     alarmIntervalRef.current = setInterval(
       () => playTimerAlert('single'),
       TIMER_CONSTANTS.BEEP_INTERVAL
-    )
+    ) as NodeJS.Timeout
 
     // Stop alarm after 30 seconds
     setTimeout(() => {
@@ -608,7 +608,7 @@ export default function Timer() {
       intervalRef.current = setInterval(() => {
         const now = Date.now()
 
-        setTime((prevTime) => {
+        setTime(() => {
           if (mode === 'timer' || mode === 'pomodoro' || mode === 't-timer') {
             // Calculate actual elapsed time based on timestamps
             const elapsed = now - startTimeRef.current
@@ -657,7 +657,7 @@ export default function Timer() {
             return elapsed
           }
         })
-      }, 100) // Update every 100ms
+      }, 100) as NodeJS.Timeout // Update every 100ms
     } else {
       if (intervalRef.current) {
         clearInterval(intervalRef.current as NodeJS.Timeout)
