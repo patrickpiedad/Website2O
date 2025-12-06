@@ -7,15 +7,6 @@ import {
   handleApiError
 } from '../../shared/utils'
 
-// Load environment variables only in development
-if (process.env.NODE_ENV === 'development') {
-  try {
-    require('dotenv').config()
-  } catch (e) {
-    // dotenv not available, skip
-  }
-}
-
 export const handler: Handler = async (
   event: HandlerEvent,
   _context: HandlerContext

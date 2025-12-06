@@ -17,7 +17,10 @@ export const GET: APIRoute = async ({ props }: APIContext) => {
   const { title, description, author } = post.data
 
   const svg = await ogImages.post(title, description, author)
-  const png = new Resvg(svg).render().asPng()
+  const pngBuffer = new Resvg(svg).render().asPng()
+
+  // Convert Buffer ➝ Uint8Array
+  const png = new Uint8Array(pngBuffer)
 
   return new Response(png, {
     headers: { 'Content-Type': 'image/png' }

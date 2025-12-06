@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import type { TTimerPhase, TTimerSettings, TTimerInputs } from './types'
 import { DEFAULT_SETTINGS, TIMER_CONSTANTS } from './constants'
 import { minutesSecondsToMs, playTimerAlert } from './utils'
@@ -22,7 +22,7 @@ export const useTTimer = () => {
   const [tTimerTotalElapsed, setTTimerTotalElapsed] = useState<number>(0)
   const [showTTimerSettings, setShowTTimerSettings] = useState<boolean>(false)
 
-  const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  const intervalRef = useRef<NodeJS.Timeout | number | null>(null)
   const startTimeRef = useRef<number>(0)
   const initialTimeRef = useRef<number>(0)
 
@@ -187,7 +187,7 @@ export const useTTimer = () => {
       intervalRef.current = setInterval(() => {
         const now = Date.now()
 
-        setTime((prevTime) => {
+        setTime(() => {
           // Calculate actual elapsed time based on timestamps
           const elapsed = now - startTimeRef.current
           const newTime = initialTimeRef.current - elapsed
@@ -215,16 +215,16 @@ export const useTTimer = () => {
           }
           return newTime
         })
-      }, TIMER_CONSTANTS.UPDATE_INTERVAL)
+      }, TIMER_CONSTANTS.UPDATE_INTERVAL) as NodeJS.Timeout
     } else {
       if (intervalRef.current) {
-        clearInterval(intervalRef.current)
+        clearInterval(intervalRef.current as NodeJS.Timeout)
       }
     }
 
     return () => {
       if (intervalRef.current) {
-        clearInterval(intervalRef.current)
+        clearInterval(intervalRef.current as NodeJS.Timeout)
       }
     }
   }, [isRunning, tTimerPhase, tTimerSettings.mode, tTimerSettings.totalTime, tTimerSettings.totalTimeSeconds, tTimerStartTime, handleTTimerComplete])
@@ -233,7 +233,7 @@ export const useTTimer = () => {
   useEffect(() => {
     return () => {
       if (intervalRef.current) {
-        clearInterval(intervalRef.current)
+        clearInterval(intervalRef.current as NodeJS.Timeout)
       }
     }
   }, [])

@@ -154,9 +154,10 @@ export default function Timer() {
   const [mode, setMode] = useState<TimerMode>('t-timer')
   const [inputMinutes, setInputMinutes] = useState<number>(5)
   const [inputSeconds, setInputSeconds] = useState<number>(0)
-  const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  type IntervalId = NodeJS.Timeout | number | null
+  const intervalRef = useRef<IntervalId>(null)
   const [isAlarmPlaying, setIsAlarmPlaying] = useState<boolean>(false)
-  const alarmIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const alarmIntervalRef = useRef<IntervalId>(null)
 
   // Timestamp tracking for accurate timing
   const startTimeRef = useRef<number>(0)
@@ -256,7 +257,7 @@ export default function Timer() {
   const stopAlarm = (): void => {
     setIsAlarmPlaying(false)
     if (alarmIntervalRef.current) {
-      clearInterval(alarmIntervalRef.current)
+      clearInterval(alarmIntervalRef.current as NodeJS.Timeout)
       alarmIntervalRef.current = null
     }
   }
@@ -272,7 +273,7 @@ export default function Timer() {
     alarmIntervalRef.current = setInterval(
       () => playTimerAlert('single'),
       TIMER_CONSTANTS.BEEP_INTERVAL
-    )
+    ) as NodeJS.Timeout
 
     // Stop alarm after 30 seconds
     setTimeout(() => {
@@ -607,7 +608,7 @@ export default function Timer() {
       intervalRef.current = setInterval(() => {
         const now = Date.now()
 
-        setTime((prevTime) => {
+        setTime(() => {
           if (mode === 'timer' || mode === 'pomodoro' || mode === 't-timer') {
             // Calculate actual elapsed time based on timestamps
             const elapsed = now - startTimeRef.current
@@ -656,16 +657,16 @@ export default function Timer() {
             return elapsed
           }
         })
-      }, 100) // Update every 100ms
+      }, 100) as NodeJS.Timeout // Update every 100ms
     } else {
       if (intervalRef.current) {
-        clearInterval(intervalRef.current)
+        clearInterval(intervalRef.current as NodeJS.Timeout)
       }
     }
 
     return () => {
       if (intervalRef.current) {
-        clearInterval(intervalRef.current)
+        clearInterval(intervalRef.current as NodeJS.Timeout)
       }
     }
   }, [
@@ -682,10 +683,10 @@ export default function Timer() {
   useEffect(() => {
     return () => {
       if (intervalRef.current) {
-        clearInterval(intervalRef.current)
+        clearInterval(intervalRef.current as NodeJS.Timeout)
       }
       if (alarmIntervalRef.current) {
-        clearInterval(alarmIntervalRef.current)
+        clearInterval(alarmIntervalRef.current as NodeJS.Timeout)
       }
     }
   }, [])
