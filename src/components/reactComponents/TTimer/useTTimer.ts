@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import type { TTimerPhase, TTimerSettings, TTimerInputs } from './types'
 import { DEFAULT_SETTINGS, TIMER_CONSTANTS } from './constants'
 import { minutesSecondsToMs, playTimerAlert } from './utils'

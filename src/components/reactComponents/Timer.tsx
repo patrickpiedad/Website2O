@@ -154,11 +154,10 @@ export default function Timer() {
   const [mode, setMode] = useState<TimerMode>('t-timer')
   const [inputMinutes, setInputMinutes] = useState<number>(5)
   const [inputSeconds, setInputSeconds] = useState<number>(0)
-  const intervalRef = useRef<ReturnType<typeof window.setInterval> | null>(null)
+  type IntervalId = ReturnType<typeof setInterval> | null
+  const intervalRef = useRef<IntervalId>(null)
   const [isAlarmPlaying, setIsAlarmPlaying] = useState<boolean>(false)
-  const alarmIntervalRef = useRef<ReturnType<typeof window.setInterval> | null>(
-    null
-  )
+  const alarmIntervalRef = useRef<IntervalId>(null)
 
   // Timestamp tracking for accurate timing
   const startTimeRef = useRef<number>(0)
