@@ -154,9 +154,11 @@ export default function Timer() {
   const [mode, setMode] = useState<TimerMode>('t-timer')
   const [inputMinutes, setInputMinutes] = useState<number>(5)
   const [inputSeconds, setInputSeconds] = useState<number>(0)
-  const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  const intervalRef = useRef<ReturnType<typeof window.setInterval> | null>(null)
   const [isAlarmPlaying, setIsAlarmPlaying] = useState<boolean>(false)
-  const alarmIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const alarmIntervalRef = useRef<ReturnType<typeof window.setInterval> | null>(
+    null
+  )
 
   // Timestamp tracking for accurate timing
   const startTimeRef = useRef<number>(0)
@@ -659,13 +661,13 @@ export default function Timer() {
       }, 100) // Update every 100ms
     } else {
       if (intervalRef.current) {
-        clearInterval(intervalRef.current)
+        window.clearInterval(intervalRef.current)
       }
     }
 
     return () => {
       if (intervalRef.current) {
-        clearInterval(intervalRef.current)
+        window.clearInterval(intervalRef.current)
       }
     }
   }, [
