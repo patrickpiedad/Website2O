@@ -7,7 +7,10 @@ export const GET: APIRoute = async () => {
   if (config.openGraphImage) return new Response()
 
   const svg = await ogImages.site()
-  const png = new Resvg(svg).render().asPng()
+  const pngBuffer = new Resvg(svg).render().asPng() // returns Buffer
+
+  // Convert Buffer → Uint8Array for Response BodyInit
+  const png = new Uint8Array(pngBuffer)
 
   return new Response(png, {
     headers: { 'Content-Type': 'image/png' }
