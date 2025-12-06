@@ -154,7 +154,7 @@ export default function Timer() {
   const [mode, setMode] = useState<TimerMode>('t-timer')
   const [inputMinutes, setInputMinutes] = useState<number>(5)
   const [inputSeconds, setInputSeconds] = useState<number>(0)
-  type IntervalId = ReturnType<typeof setInterval> | null
+  type IntervalId = NodeJS.Timeout | number | null
   const intervalRef = useRef<IntervalId>(null)
   const [isAlarmPlaying, setIsAlarmPlaying] = useState<boolean>(false)
   const alarmIntervalRef = useRef<IntervalId>(null)
@@ -257,7 +257,7 @@ export default function Timer() {
   const stopAlarm = (): void => {
     setIsAlarmPlaying(false)
     if (alarmIntervalRef.current) {
-      clearInterval(alarmIntervalRef.current)
+      clearInterval(alarmIntervalRef.current as NodeJS.Timeout)
       alarmIntervalRef.current = null
     }
   }
@@ -660,13 +660,13 @@ export default function Timer() {
       }, 100) // Update every 100ms
     } else {
       if (intervalRef.current) {
-        window.clearInterval(intervalRef.current)
+        clearInterval(intervalRef.current as NodeJS.Timeout)
       }
     }
 
     return () => {
       if (intervalRef.current) {
-        window.clearInterval(intervalRef.current)
+        clearInterval(intervalRef.current as NodeJS.Timeout)
       }
     }
   }, [
@@ -683,10 +683,10 @@ export default function Timer() {
   useEffect(() => {
     return () => {
       if (intervalRef.current) {
-        clearInterval(intervalRef.current)
+        clearInterval(intervalRef.current as NodeJS.Timeout)
       }
       if (alarmIntervalRef.current) {
-        clearInterval(alarmIntervalRef.current)
+        clearInterval(alarmIntervalRef.current as NodeJS.Timeout)
       }
     }
   }, [])

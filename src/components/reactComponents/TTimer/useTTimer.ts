@@ -22,7 +22,7 @@ export const useTTimer = () => {
   const [tTimerTotalElapsed, setTTimerTotalElapsed] = useState<number>(0)
   const [showTTimerSettings, setShowTTimerSettings] = useState<boolean>(false)
 
-  const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  const intervalRef = useRef<NodeJS.Timeout | number | null>(null)
   const startTimeRef = useRef<number>(0)
   const initialTimeRef = useRef<number>(0)
 
@@ -218,13 +218,13 @@ export const useTTimer = () => {
       }, TIMER_CONSTANTS.UPDATE_INTERVAL)
     } else {
       if (intervalRef.current) {
-        clearInterval(intervalRef.current)
+        clearInterval(intervalRef.current as NodeJS.Timeout)
       }
     }
 
     return () => {
       if (intervalRef.current) {
-        clearInterval(intervalRef.current)
+        clearInterval(intervalRef.current as NodeJS.Timeout)
       }
     }
   }, [isRunning, tTimerPhase, tTimerSettings.mode, tTimerSettings.totalTime, tTimerSettings.totalTimeSeconds, tTimerStartTime, handleTTimerComplete])
@@ -233,7 +233,7 @@ export const useTTimer = () => {
   useEffect(() => {
     return () => {
       if (intervalRef.current) {
-        clearInterval(intervalRef.current)
+        clearInterval(intervalRef.current as NodeJS.Timeout)
       }
     }
   }, [])
