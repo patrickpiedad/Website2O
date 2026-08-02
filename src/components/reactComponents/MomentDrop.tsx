@@ -1572,7 +1572,7 @@ const MomentDrop: React.FC = () => {
             fontSize: '0.9rem'
           }}
         >
-          <p>© 2025 Patrick Piedad</p>
+          <p>© 2026 Patrick Piedad</p>
         </footer>
       </div>
 
